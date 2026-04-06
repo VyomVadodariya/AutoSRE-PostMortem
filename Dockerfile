@@ -20,3 +20,7 @@ COPY . /app
 RUN pip install --no-cache-dir pydantic pydantic-core
 
 # The Hugging Face OpenEnv validator handles the rest
+# ... (all your previous lines remain the same) ...
+
+# Keep the container running so it doesn't exit immediately
+CMD ["tail", "-f", "/dev/null"]
