@@ -1,7 +1,7 @@
 # Use a lightweight Python Linux image
 FROM python:3.11-slim
 
-# Install the essential Linux terminal tools the AI will use
+# Install the essential Linux terminal tools
 RUN apt-get update && apt-get install -y \
     procps \
     grep \
@@ -9,13 +9,14 @@ RUN apt-get update && apt-get install -y \
     coreutils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up the working directory inside the cloud container
+# Set up the working directory
 WORKDIR /app
 
-# Copy all your local files into the cloud container
+# Copy everything (including our custom 'openenv' folder)
 COPY . /app
 
-# Install the Python requirements
-RUN pip install --no-cache-dir pydantic openenv-py
+# Install only the necessary public packages
+# We removed openenv-py because we provide the logic in our local folder
+RUN pip install --no-cache-dir pydantic pydantic-core
 
-# The Hugging Face OpenEnv validator handles the boot command automatically.
+# The Hugging Face OpenEnv validator handles the rest
