@@ -1,0 +1,15 @@
+﻿[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autosre-postmortem"
+version = "1.0.0"
+dependencies = [
+    "openenv-core",
+    "pydantic",
+    "requests",
+    "fastapi",
+    "uvicorn",
+    "openai"
+]
