@@ -24,8 +24,9 @@ def reset_environment():
 
 @app.post("/step")
 def take_action(action: Action):
-    # observation, reward, done, info = env.step(action.command)
-    # return {"observation": observation, "reward": reward, "done": done}
+    # This calls your actual logic!
+    observation, reward, done, info = env.step(action.command)
+    return {"observation": observation, "reward": reward, "done": done}
     
     # Placeholder logic to test the connection:
     if "block ip" in action.command.lower():
