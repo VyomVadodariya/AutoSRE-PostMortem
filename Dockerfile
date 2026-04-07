@@ -1,19 +1,29 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y \
-    procps \
-    grep \
-    gawk \
-    coreutils \
-    && rm -rf /var/lib/apt/lists/*
+# (Keep the FROM and apt-get lines at the top the same)
+
+# Install EVERYTHING your environment.py imports
+RUN pip install --no-cache-dir \
+    pydantic \
+    pydantic-core \
+    fastapi \
+    uvicorn \
+    requests \
+    openenv \
+    python-multipart
+
+# (Keep WORKDIR, COPY, EXPOSE, and CMD the same)
 
 WORKDIR /app
 
 COPY . /app
 
-# Here is the updated line with fastapi and uvicorn:
-RUN pip install --no-cache-dir pydantic pydantic-core fastapi uvicorn
+RUN pip install --no-cache-dir pydantic pydantic-core
+
+
+# (Keep all your other lines the same)
 
 EXPOSE 7860
 
+# Run our custom SRE health check server
 CMD ["python", "-u", "health_server.py"]
