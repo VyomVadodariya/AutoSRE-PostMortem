@@ -11,12 +11,9 @@ WORKDIR /app
 
 COPY . /app
 
-RUN pip install --no-cache-dir pydantic pydantic-core
-
-
-# (Keep all your other lines the same)
+# Here is the updated line with fastapi and uvicorn:
+RUN pip install --no-cache-dir pydantic pydantic-core fastapi uvicorn
 
 EXPOSE 7860
 
-# The bulletproof Hugging Face health-check server
-CMD ["python", "-u", "-m", "http.server", "7860", "--bind", "0.0.0.0"]
+CMD ["python", "-u", "health_server.py"]
