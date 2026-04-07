@@ -14,8 +14,9 @@ COPY . /app
 RUN pip install --no-cache-dir pydantic pydantic-core
 
 
-# Expose the port Hugging Face expects
+# (Keep all your other lines the same)
+
 EXPOSE 7860
 
-# Run a tiny built-in server to pass the health check
-CMD ["python", "-m", "http.server", "7860"]
+# The bulletproof Hugging Face health-check server
+CMD ["python", "-u", "-m", "http.server", "7860", "--bind", "0.0.0.0"]
