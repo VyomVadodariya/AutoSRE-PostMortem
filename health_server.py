@@ -1,16 +1,27 @@
+import sys
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 
-# TODO: Import your actual environment class here
-# from environment import AutoSREEnv 
+# --- 1. BOOT DIAGNOSTICS ---
+try:
+    print("--- Attempting to load SRE Brain ---")
+    from environment import SREEnvironment
+    from models import SREAction 
+    import generate_logs
+    print("✅ All modules loaded successfully!")
+except Exception as e:
+    print(f"❌ FATAL BOOT ERROR: {str(e)}")
+    sys.exit(1)
 
+# --- 2. INITIALIZATION ---
 app = FastAPI(title="AutoSRE PostMortem V1")
-# env = AutoSREEnv() # Initialize your world
+env = SREEnvironment()
 
-# --- The input schemas for the AI ---
-class Action(BaseModel):
+class ActionRequest(BaseModel):
     command: str
+
+# --- 3. ENDPOINTS ---
 
 @app.get("/")
 def health_check():
@@ -18,12 +29,8 @@ def health_check():
 
 @app.post("/reset")
 def reset_environment():
-    # state = env.reset()
-    # return {"observation": state}
-    return {"observation": "ALERT: Incoming DDoS detected on Port 443. CPU at 99%."}
-
-class ActionRequest(BaseModel):
-    command: str
+    obs = env.reset()
+    return {"observation": obs.terminal_output}
 
 @app.post("/step")
 def take_action(req: ActionRequest):
@@ -31,7 +38,7 @@ def take_action(req: ActionRequest):
         # Create the action your Environment expects
         action = SREAction(
             action_type="bash_command", 
-            command=req.command # This MUST match the key in test_ai_agent
+            command=req.command
         )
         result = env.step(action)
         return {
@@ -41,4 +48,10 @@ def take_action(req: ActionRequest):
             "done": bool(result.done)
         }
     except Exception as e:
+        print(f"❌ STEP ERROR: {str(e)}")
         return {"error": str(e)}, 500
+
+# --- 4. START SERVER (THE MOST IMPORTANT PART) ---
+if __name__ == "__main__":
+    print("🚀 Starting Uvicorn Server on Port 7860...")
+    uvicorn.run(app, host="0.0.0.0", port=7860)
