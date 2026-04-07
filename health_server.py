@@ -45,6 +45,3 @@ def take_action(req: ActionRequest):
         # This will print the EXACT error in your HF Logs if it fails again
         print(f"❌ STEP ERROR: {str(e)}")
         return {"error": str(e)}, 500
-if __name__ == "__main__":
-    print("--- Booting AutoSRE API Server ---")
-    uvicorn.run(app, host="0.0.0.0", port=7860)
