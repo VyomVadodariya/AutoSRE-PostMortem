@@ -2,18 +2,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
 
-# 1. Import YOUR actual environment and models
-from environment import SREEnvironment
-from models import SREAction 
+# TODO: Import your actual environment class here
+# from environment import AutoSREEnv 
 
 app = FastAPI(title="AutoSRE PostMortem V1")
+# env = AutoSREEnv() # Initialize your world
 
-# 2. Initialize YOUR world
-print("--- Booting Auto-SRE Engine ---")
-env = SREEnvironment()
-
-# The format the AI uses to send commands
-class ActionRequest(BaseModel):
+# --- The input schemas for the AI ---
+class Action(BaseModel):
     command: str
 
 @app.get("/")
@@ -22,39 +18,33 @@ def health_check():
 
 @app.post("/reset")
 def reset_environment():
-    # Call your actual reset function (triggers generate_logs.py)
-    obs = env.reset()
-    
-    # Send the pristine state back to the AI
-    return {
-        "observation": f"Environment Reset. Health: {obs.system_health_score}. Directory: {obs.current_directory}"
-    }
+    # state = env.reset()
+    # return {"observation": state}
+    return {"observation": "ALERT: Incoming DDoS detected on Port 443. CPU at 99%."}
 
 @app.post("/step")
 def take_action(req: ActionRequest):
-    # 1. Format the AI's text into YOUR SREAction object
-    action = SREAction(
-        action_type="bash_command", 
-        command=req.command
-    )
-    
-    # 2. Run the command in your environment
-    result = env.step(action)
-    
-    # 3. Send the terminal output and health back to the AI
-    # (Using getattr as a failsafe just in case)
-    terminal_out = getattr(result.observation, 'terminal_output', str(result.observation))
-    health = getattr(result.observation, 'system_health_score', 0)
-    reward_val = getattr(result, 'reward', 0)
-    is_done = getattr(result, 'done', False)
-
-    return {
-        "observation": terminal_out,
-        "health_score": health,
-        "reward": reward_val,
-        "done": is_done
-    }
-
+    try:
+        # Create the action your Environment expects
+        action = SREAction(
+            action_type="bash_command", 
+            command=req.command
+        )
+        
+        # Execute the step
+        result = env.step(action)
+        
+        # Return the results safely
+        return {
+            "observation": str(result.observation.terminal_output),
+            "health_score": float(result.observation.system_health_score),
+            "reward": float(result.reward),
+            "done": bool(result.done)
+        }
+    except Exception as e:
+        # This will print the EXACT error in your HF Logs if it fails again
+        print(f"❌ STEP ERROR: {str(e)}")
+        return {"error": str(e)}, 500
 if __name__ == "__main__":
-    print("--- Booting Uvicorn Enterprise Server ---")
+    print("--- Booting AutoSRE API Server ---")
     uvicorn.run(app, host="0.0.0.0", port=7860)
