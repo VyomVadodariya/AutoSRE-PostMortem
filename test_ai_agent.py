@@ -1,28 +1,29 @@
 import requests
 
-# Your live cloud API endpoints
 BASE_URL = "https://vyomvadodariya-autosre-postmortem-v1.hf.space"
-STEP_URL = f"{BASE_URL}/step"
 
-print("🤖 [AI AGENT] Connecting to AutoSRE Cloud Environment...")
+def send_command(cmd):
+    print(f"\n🤖 [AI] Executing: {cmd}")
+    response = requests.post(f"{BASE_URL}/step", json={"command": cmd})
+    try:
+        return response.json()
+    except:
+        print(f"❌ Server Error: {response.status_code}")
+        print(f"📄 Response Text: {response.text}")
+        return {"observation": "Error reading response"}
+# 1. RESET THE WORLD
+print("🔄 Resetting Environment...")
+requests.post(f"{BASE_URL}/reset")
 
-# 1. The AI decides to take an action
-ai_action = {"command": "block ip 192.168.1.50"}
-print(f"🤖 [AI AGENT] Executing command: '{ai_action['command']}'")
+# 2. BLOCK THE ATTACKERS (Using your custom block_ip command)
+# Your code identifies these 3 IPs as the attackers
+attackers = ["192.168.1.100", "192.168.1.101", "192.168.1.102"]
+for ip in attackers:
+    res = send_command(f"block_ip {ip}")
+    print(f"👁️  {res['observation']}")
 
-try:
-    # 2. We send the action to your Consequence Engine in the cloud
-    response = requests.post(STEP_URL, json=ai_action)
-    
-    if response.status_code == 200:
-        result = response.json()
-        print("\n🌍 [CLOUD ENVIRONMENT RESPONSE]")
-        print(f"👁️  Observation: {result['observation']}")
-        print(f"🏆 Reward:      {result['reward']}")
-        print(f"🏁 Is Done?:    {result['done']}")
-    else:
-        print(f"❌ ERROR: Server returned {response.status_code}")
-        print(response.text)
+# 3. VERIFY THE WORKSPACE (Real Linux command)
+res = send_command("ls -la")
+print(f"👁️  Files in Workspace:\n{res['observation']}")
 
-except Exception as e:
-    print(f"🚨 CONNECTION FAILED: {e}")
+print("\n✅ TEST COMPLETE. If rewards/health are stable, your SRE Engine is ready for Meta!")

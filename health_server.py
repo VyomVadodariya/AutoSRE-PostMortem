@@ -22,19 +22,18 @@ def reset_environment():
     # return {"observation": state}
     return {"observation": "ALERT: Incoming DDoS detected on Port 443. CPU at 99%."}
 
+class ActionRequest(BaseModel):
+    command: str
+
 @app.post("/step")
 def take_action(req: ActionRequest):
     try:
         # Create the action your Environment expects
         action = SREAction(
             action_type="bash_command", 
-            command=req.command
+            command=req.command # This MUST match the key in test_ai_agent
         )
-        
-        # Execute the step
         result = env.step(action)
-        
-        # Return the results safely
         return {
             "observation": str(result.observation.terminal_output),
             "health_score": float(result.observation.system_health_score),
@@ -42,6 +41,4 @@ def take_action(req: ActionRequest):
             "done": bool(result.done)
         }
     except Exception as e:
-        # This will print the EXACT error in your HF Logs if it fails again
-        print(f"❌ STEP ERROR: {str(e)}")
         return {"error": str(e)}, 500
