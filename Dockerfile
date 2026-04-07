@@ -1,29 +1,33 @@
 FROM python:3.11-slim
 
-# (Keep the FROM and apt-get lines at the top the same)
+# Install system tools your SRE environment needs (procps, grep, etc.)
+RUN apt-get update && apt-get install -y \
+    procps \
+    grep \
+    gawk \
+    coreutils \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install EVERYTHING your environment.py imports
+WORKDIR /app
+
+# IMPORTANT: Create the workspace folder so your code doesn't crash
+RUN mkdir -p /app/sre_workspace
+
+COPY . /app
+
+# Install all OpenEnv and FastAPI dependencies
 RUN pip install --no-cache-dir \
     pydantic \
     pydantic-core \
     fastapi \
     uvicorn \
     requests \
-    openenv \
+    openenv-core \
     python-multipart
-
-# (Keep WORKDIR, COPY, EXPOSE, and CMD the same)
-
-WORKDIR /app
-
-COPY . /app
-
-RUN pip install --no-cache-dir pydantic pydantic-core
-
-
-# (Keep all your other lines the same)
 
 EXPOSE 7860
 
-# Run our custom SRE health check server
+# Force logs to show up instantly so we can see any future errors
+ENV PYTHONUNBUFFERED=1
+
 CMD ["python", "-u", "health_server.py"]
