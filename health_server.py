@@ -35,12 +35,18 @@ def reset_environment():
 @app.post("/step")
 def take_action(req: ActionRequest):
     try:
-        # Create the action your Environment expects
+        # --- NEW LOGGING ---
+        print(f"\n[STEP] AI Action: {req.command}")
+        
         action = SREAction(
             action_type="bash_command", 
             command=req.command
         )
         result = env.step(action)
+        
+        # --- NEW LOGGING ---
+        print(f"Current Reward: {result.reward}")
+        
         return {
             "observation": str(result.observation.terminal_output),
             "health_score": float(result.observation.system_health_score),

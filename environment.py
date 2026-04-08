@@ -123,14 +123,15 @@ class SREEnvironment(Environment):
     def run_graders(self) -> float:
         total_reward = 0.0
         
-        # Easy Task (Weight 0.3): docker-compose.yml port mapping fixed
+        # Easy Task: docker-compose.yml port mapping fixed
         try:
             with open(os.path.join(self.workspace, "config", "docker-compose.yml"), "r") as f:
                 if "- \"80:80\"" in f.read():
                     total_reward += 0.3
+                    print("✅ [SUCCESS] Task 1 (Docker Port) cleared with reward 0.3!")
         except Exception: pass
 
-        # Medium Task (Weight 0.3): test_payment.py executes with exit code 0
+        # Medium Task: test_payment.py executes with exit code 0
         try:
             res = subprocess.run(
                 ["python", "test_payment.py"], 
@@ -139,17 +140,18 @@ class SREEnvironment(Environment):
             )
             if res.returncode == 0:
                 total_reward += 0.3
+                print("✅ [SUCCESS] Task 2 (Payment API) cleared with reward 0.3!")
         except Exception: pass
 
-        # Hard Task (Weight 0.4): Database password patched AND IPs were blocked
+        # Hard Task: Database password patched AND IPs were blocked
         try:
             with open(os.path.join(self.workspace, "config", "database.yml"), "r") as f:
                 content = f.read()
-                # Check if password is no longer empty
                 if "password:" in content and '""' not in content:
                     missing_blocks = [ip for ip in self.ddos_ips if ip not in self.blocked_ips]
                     if not missing_blocks:
                         total_reward += 0.4
+                        print("✅ [SUCCESS] Task 3 (DDoS & DB Patch) cleared with reward 0.4!")
         except Exception: pass
 
         return total_reward
