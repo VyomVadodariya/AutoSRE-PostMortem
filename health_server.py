@@ -1,5 +1,5 @@
 import sys
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel
 import uvicorn
 
@@ -27,24 +27,28 @@ class ActionRequest(BaseModel):
 def health_check():
     return {"status": "🟢 AutoSRE Environment is LIVE and ready for AI agents."}
 
+@app.get("/state")
+def get_state():
+    return {"health": env.system_health_score, "steps": env.step_count}
+
 @app.post("/reset")
-def reset_environment():
-    obs = env.reset()
+def reset_environment(task_id: str = Query("3", description="The scenario ID to load")):
+    print(f"\n[START] Starting Task {task_id}")
+    obs = env.reset(task_id=task_id)
     return {"observation": obs.terminal_output}
 
 @app.post("/step")
 def take_action(req: ActionRequest):
     try:
-        # --- NEW LOGGING ---
         print(f"\n[STEP] AI Action: {req.command}")
         
+        # Create the action your Environment expects
         action = SREAction(
             action_type="bash_command", 
             command=req.command
         )
-        result = env.step(action)
         
-        # --- NEW LOGGING ---
+        result = env.step(action)
         print(f"Current Reward: {result.reward}")
         
         return {
@@ -57,7 +61,7 @@ def take_action(req: ActionRequest):
         print(f"❌ STEP ERROR: {str(e)}")
         return {"error": str(e)}, 500
 
-# --- 4. START SERVER (THE MOST IMPORTANT PART) ---
+# --- 4. START SERVER ---
 if __name__ == "__main__":
     print("🚀 Starting Uvicorn Server on Port 7860...")
     uvicorn.run(app, host="0.0.0.0", port=7860)
