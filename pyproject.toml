@@ -11,7 +11,9 @@ dependencies = [
     "requests",
     "fastapi",
     "uvicorn",
-    "openai"
+    "openai",
+    "streamlit",
+    "pandas"
 ]
 [project.scripts]
 server = "server.app:main"
