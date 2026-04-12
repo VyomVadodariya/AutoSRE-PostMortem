@@ -1,4 +1,13 @@
-﻿# 🚨 AutoSRE: Autonomous Incident Recovery Environment
+﻿---
+title: AutoSRE Incident Recovery
+emoji: 🚨
+colorFrom: blue
+colorTo: red
+sdk: streamlit
+app_file: app.py
+pinned: false
+---
+# 🚨 AutoSRE: Autonomous Incident Recovery Environment
 
 **A Reinforcement Learning simulation for training AI to autonomously debug and resolve production server outages.** Built for the Meta PyTorch OpenEnv Hackathon.
 
