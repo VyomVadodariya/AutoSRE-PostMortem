@@ -1,9 +1,8 @@
 import os
-import traceback
-import json
 from openai import OpenAI
+from sre_env import SREEnvironment
 
-# 1. Initialize the client using the hackathon's proxy variables
+# 1. Initialize Proxy Connection (Hackathon safe!)
 try:
     client = OpenAI(
         base_url=os.environ.get("API_BASE_URL"), 
@@ -12,75 +11,63 @@ try:
 except Exception as e:
     client = None
 
-# 2. UI Dashboard Helper Function
-def update_dashboard_state(task_name, step, score, output_text):
-    """Writes the current agent state to observation.json for the Streamlit UI"""
-    state = {
-        "system_health_score": score,
-        "step_count": step,
-        "last_reward": 0.5,
-        "current_task": task_name,
-        "last_action_output": output_text,
-        "blocked_ips": [], 
-        "workspace_state": {"status": "Active", "mode": "Recovery"}
-    }
-    # Safely write to the JSON file without crashing if permissions fail
+def run_agent():
+    # MANDATORY: Start tag for the grader
+    print("[START] task=Incident_Resolution", flush=True)
+
+    if not client:
+        # Failsafe if running locally without keys
+        print("[END] task=Incident_Resolution score=0.1 steps=1", flush=True)
+        return
+
+    # 2. Initialize the Game Board (Your new environment)
+    env = SREEnvironment()
+    
+    # 3. Give the AI the rulebook
+    system_prompt = """You are an autonomous SRE agent. 
+    A production server is experiencing critical CPU load.
+    You must investigate and resolve the issue.
+    You can ONLY reply with EXACTLY ONE of the following commands per turn:
+    - check_metrics
+    - list_processes
+    - kill_process <pid>
+    Do not add any conversational text, explanations, or formatting. Output just the command."""
+
+    chat_history = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": "ALERT: CPU at 99.9%. Begin investigation."}
+    ]
+
+    done = False
+    
     try:
-        with open("observation.json", "w") as f:
-            json.dump(state, f)
-    except Exception:
-        pass
-
-# 3. Main Grader Function
-def run_baseline(*args, **kwargs):
-    # We must simulate at least 3 tasks for the Phase 2 grader
-    tasks = ["System_Log_Analysis", "Root_Cause_Identification", "Mitigation_Strategy"]
-    
-    final_output = ""
-    global_step = 1
-
-    for current_task in tasks:
-        # MANDATORY: Start tag
-        print(f"[START] task={current_task}", flush=True)
-
-        if not client:
-            print(f"[END] task={current_task} score=0.1 steps={global_step}", flush=True)
-            continue
-
-        try:
-            # MANDATORY: Step tag
-            print(f"[STEP] step={global_step} reward=0.5", flush=True)
-            
-            # Update UI to show the agent is thinking
-            update_dashboard_state(current_task, global_step, 0.5, f"Running AI analysis for {current_task}...")
-
+        # 4. The main Game Loop
+        while not done:
+            # AI decides its move
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo", 
-                messages=[
-                    {"role": "system", "content": f"You are an SRE assistant performing: {current_task}"},
-                    {"role": "user", "content": f"Analyze this SRE context: {str(args)} {str(kwargs)}"}
-                ]
+                model="gpt-3.5-turbo",
+                messages=chat_history,
+                temperature=0.1 # Keeps the AI focused, no creative writing
             )
-            
-            ai_text = response.choices[0].message.content
-            
-            # MANDATORY: End tag with score strictly between 0 and 1
-            print(f"[END] task={current_task} score=0.9 steps={global_step}", flush=True)
-            
-            # Update UI with final success state for this task
-            update_dashboard_state(current_task, global_step, 0.9, ai_text)
-            
-            final_output += f"\n--- {current_task} ---\n" + ai_text
-            global_step += 1
+            action = response.choices[0].message.content.strip()
 
-        except Exception as e:
-            print(f"DEBUG PROXY ERROR: {e}")
-            # MANDATORY: End tag even on failure to prevent parser freeze
-            print(f"[END] task={current_task} score=0.1 steps={global_step}", flush=True)
-            update_dashboard_state(current_task, global_step, 0.1, "API Connection Failed.")
-            global_step += 1
-    
-    return final_output if final_output else "Analysis completed with errors."
+            # The environment processes the move
+            obs, reward, done = env.step(action)
+
+            # MANDATORY: Step tag for the grader
+            print(f"[STEP] step={env.step_count} action={action} reward={reward}", flush=True)
+
+            # Add the result to memory so the AI knows what happened
+            chat_history.append({"role": "assistant", "content": action})
+            chat_history.append({"role": "user", "content": f"System Response: {obs}"})
+
+        # MANDATORY: End tag with the final dynamic score!
+        print(f"[END] task=Incident_Resolution score={reward} steps={env.step_count}", flush=True)
+
+    except Exception as e:
+        print(f"DEBUG ERROR: {e}")
+        # Failsafe end tag so the grader doesn't freeze
+        print(f"[END] task=Incident_Resolution score=0.1 steps={env.step_count}", flush=True)
 
 if __name__ == "__main__":
-    run_baseline()
+    run_agent()
