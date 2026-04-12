@@ -1,0 +1,5 @@
+{
+    "task_1": {"name": "Malware Spike", "grader": "builtin"},
+    "task_2": {"name": "Log Bloat", "grader": "builtin"},
+    "task_3": {"name": "Hybrid Failure", "grader": "builtin"}
+}

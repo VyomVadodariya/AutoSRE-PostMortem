@@ -6,8 +6,17 @@ class SREEnvironment:
         self.scenarios = ["MALWARE_SPIKE", "LOG_BLOAT", "HYBRID_FAILURE"]
         self.reset()
 
-    def reset(self):
-        self.current_scenario = random.choice(self.scenarios)
+    def reset(self, task_id=None):
+        # Force specific scenario if the grader bot requests it
+        if task_id in ["task_1", "MALWARE_SPIKE"]:
+            self.current_scenario = "MALWARE_SPIKE"
+        elif task_id in ["task_2", "LOG_BLOAT"]:
+            self.current_scenario = "LOG_BLOAT"
+        elif task_id in ["task_3", "HYBRID_FAILURE"]:
+            self.current_scenario = "HYBRID_FAILURE"
+        else:
+            self.current_scenario = random.choice(self.scenarios)
+            
         self.step_count = 0
         self.max_steps = 12
 
@@ -15,11 +24,9 @@ class SREEnvironment:
         self.logs_cleared = False
         self.service_restored = False
 
-        # Hidden truth (agent cannot directly see this)
         self.malware_pid = str(random.randint(7000, 9999))
         self.log_file = "/var/log/nginx/access.log"
 
-        # Noisy / ambiguous signals
         base_cpu = random.uniform(30, 95)
         base_disk = random.uniform(30, 95)
 
@@ -33,7 +40,7 @@ class SREEnvironment:
                 "cpu": base_cpu, "disk": max(base_disk, 90), "memory": random.uniform(50, 85),
                 "nginx": "OFFLINE", "health": "DEGRADED", "alerts": ["disk_full"]
             }
-        else:  # HYBRID_FAILURE (hard mode)
+        else:  
             self.state = {
                 "cpu": max(base_cpu, 80), "disk": max(base_disk, 85), "memory": random.uniform(70, 95),
                 "nginx": "OFFLINE", "health": "CRITICAL", "alerts": ["high_cpu", "disk_full"]
@@ -45,12 +52,11 @@ class SREEnvironment:
 
     def step(self, action):
         self.step_count += 1
-        reward = -0.03  # time penalty
+        reward = -0.03  
         done = False
         obs = ""
         action = action.strip().lower()
 
-        # INSPECTION ACTIONS
         if action == "check_metrics":
             obs = f"CPU: {round(self.state['cpu'],1)}%, Disk: {round(self.state['disk'],1)}%, Memory: {round(self.state['memory'],1)}%"
         elif action == "list_processes":
@@ -66,7 +72,6 @@ class SREEnvironment:
         elif action == "check_network":
             obs = "Network stable. No anomalies."
 
-        # FIX ACTIONS
         elif action.startswith("kill_process"):
             pid = action.split()[-1]
             if pid == self.malware_pid:
@@ -102,7 +107,7 @@ class SREEnvironment:
                     done, reward, obs = True, reward + 1.0, "SUCCESS: Service restored."
                 else:
                     reward, obs = reward - 0.3, "FAIL: Disk still full."
-            else:  # HYBRID
+            else: 
                 if self.threat_neutralized and self.logs_cleared:
                     done, reward, obs = True, reward + 1.2, "SUCCESS: Full recovery achieved."
                 else:
@@ -117,7 +122,6 @@ class SREEnvironment:
         return obs, reward, done
 
     def update_telemetry(self, last_output, reward):
-        # UI safe keys!
         ui_state = {
             "system_health_score": reward,
             "step_count": self.step_count,
