@@ -1,2 +1,5 @@
 streamlit
 openai
+fastapi
+uvicorn
+pydantic
