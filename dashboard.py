@@ -55,7 +55,7 @@ while True:
             st.write("###")
 
             # 2. Main Dashboard Layout
-            left_col, right_col = st.columns()
+            left_col, right_col = st.columns(2)
 
             with left_col:
                 st.write("#### 📟 Live Agent Terminal Output")
