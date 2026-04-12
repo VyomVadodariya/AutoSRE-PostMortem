@@ -3,8 +3,7 @@ title: AutoSRE Incident Recovery
 emoji: 🚨
 colorFrom: blue
 colorTo: red
-sdk: streamlit
-app_file: app.py
+sdk: docker
 pinned: false
 ---
 # 🚨 AutoSRE: Autonomous Incident Recovery Environment
