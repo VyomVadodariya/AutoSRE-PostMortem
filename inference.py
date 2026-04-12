@@ -24,15 +24,21 @@ def run_agent():
     env = SREEnvironment()
     
     # 3. Give the AI the rulebook
-    system_prompt = """You are an autonomous SRE agent. 
-    A production server has critical CPU load and degraded services.
-    You must investigate, neutralize the root cause, AND restore offline services.
-    You can ONLY reply with EXACTLY ONE of the following commands per turn:
+    system_prompt = """You are an elite SRE agent. Investigate and restore the system.
+    Available Commands: 
     - check_metrics
     - list_processes
+    - inspect_logs
+    - check_network
     - kill_process <pid>
-    - restart_service <service_name>
-    Do not add any conversational text. Output just the command."""
+    - clear_logs
+    - restart_service nginx
+
+    Strategy:
+    - Diagnose before acting.
+    - Some scenarios have MULTIPLE root causes (e.g., high CPU AND full disk).
+    - Restore 'nginx' only after all threats are neutralized.
+    Reply with ONLY the command string."""
 
     chat_history = [
         {"role": "system", "content": system_prompt},

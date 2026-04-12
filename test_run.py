@@ -1,26 +1,30 @@
 import time
 from sre_env import SREEnvironment
 
-print("🚀 Starting V2 Local UI Test...")
+print("🚀 Starting Elite V3 Local UI Test...")
 env = SREEnvironment()
+time.sleep(2)
 
-print("Switch to your Streamlit dashboard NOW! (localhost:8501)")
-time.sleep(3)
+scenario = env.current_scenario
+print(f"🔥 INJECTED SCENARIO: {scenario}")
 
-# The test agent dynamically extracts the random malware PID!
-randomized_malware = env.malware_pid
+# Create a dynamic test path based on what the environment randomly spawned
+moves = ["check_metrics", "check_network"]
 
-simulated_ai_moves = [
-    "check_metrics",
-    "list_processes",
-    "restart_service nginx_web_server", # Agent tries to fix it early (Will Fail!)
-    f"kill_process {randomized_malware}", # Agent finds and kills the dynamic PID
-    "restart_service nginx_web_server"  # Agent successfully restores the server
-]
+if scenario == "MALWARE_SPIKE":
+    moves.extend(["list_processes", f"kill_process {env.malware_pid}", "restart_service nginx"])
+elif scenario == "LOG_BLOAT":
+    moves.extend(["inspect_logs", "clear_logs", "restart_service nginx"])
+else: # HYBRID
+    moves.extend([
+        "list_processes", f"kill_process {env.malware_pid}", 
+        "inspect_logs", "clear_logs", 
+        "restart_service nginx"
+    ])
 
-for action in simulated_ai_moves:
-    print(f"\n[AI is typing...] -> {action}")
+for action in moves:
+    print(f"\n[AI] -> {action}")
     env.step(action)
     time.sleep(3)
 
-print("\n✅ V2 Test Complete! Check the dashboard!")
+print("\n✅ Test Complete!")
