@@ -25,13 +25,14 @@ def run_agent():
     
     # 3. Give the AI the rulebook
     system_prompt = """You are an autonomous SRE agent. 
-    A production server is experiencing critical CPU load.
-    You must investigate and resolve the issue.
+    A production server has critical CPU load and degraded services.
+    You must investigate, neutralize the root cause, AND restore offline services.
     You can ONLY reply with EXACTLY ONE of the following commands per turn:
     - check_metrics
     - list_processes
     - kill_process <pid>
-    Do not add any conversational text, explanations, or formatting. Output just the command."""
+    - restart_service <service_name>
+    Do not add any conversational text. Output just the command."""
 
     chat_history = [
         {"role": "system", "content": system_prompt},

@@ -1,35 +1,41 @@
 import json
 import time
+import random
 
 class SREEnvironment:
     def __init__(self):
-        # We start by forcing a reset to get the initial broken state
         self.reset()
 
     def reset(self):
-        """Resets the server to its initial broken state."""
+        """Resets the server with dynamic, randomized issues."""
+        # The malware hides under a new PID every single time!
+        self.malware_pid = str(random.randint(7000, 9999)) 
+        
         self.state = {
             "cpu_usage": 99.9,
-            "memory_usage": "85%",
-            "active_processes": {
-                "1042": "nginx", 
-                "2033": "mysql", 
-                "9999": "kdevtmpfsi" # Classic crypto-miner malware name
+            "system_health": "CRITICAL",
+            "services": {
+                "nginx_web_server": "OFFLINE",
+                "mysql_database": "ONLINE"
             },
-            "system_health": "CRITICAL"
+            "active_processes": {
+                "1042": "nginx_worker", 
+                "2033": "mysql_daemon", 
+                self.malware_pid: "kdevtmpfsi" # The hidden malware
+            }
         }
         self.step_count = 0
-        self.max_steps = 7
-        self.update_telemetry("Environment Initialized. Awaiting AI connection...", 0)
-        return "ALERT: CPU Usage Critical at 99.9%. Investigate immediately."
+        self.max_steps = 10
+        self.malware_killed = False
+        self.update_telemetry("Environment V2 Initialized. Dynamic generation active.", 0)
+        return "ALERT: CPU Critical. Nginx is OFFLINE. Investigate and restore services."
 
     def update_telemetry(self, last_output, reward):
-        """Secretly updates your Streamlit dashboard after every move!"""
         ui_state = {
             "system_health_score": reward,
             "step_count": self.step_count,
             "last_reward": reward,
-            "current_task": "Interactive Debugging Session",
+            "current_task": "Multi-Step Incident Remediation",
             "last_action_output": last_output,
             "workspace_state": self.state
         }
@@ -40,63 +46,72 @@ class SREEnvironment:
             pass
 
     def step(self, action):
-        """The core OpenEnv game loop. Takes an AI action, returns (obs, reward, done)."""
         self.step_count += 1
         reward = 0.0
         done = False
         observation = ""
-
-        # Clean the AI's input
         action = action.strip().lower()
 
-        # ACTION 1: Check Metrics
         if action == "check_metrics":
-            observation = f"CPU: {self.state['cpu_usage']}%, Memory: {self.state['memory_usage']}"
-            reward = -0.1 # Slight time penalty for gathering info
+            observation = f"CPU: {self.state['cpu_usage']}%. Services: {self.state['services']}"
+            reward = -0.1 
             
-        # ACTION 2: List Processes
         elif action == "list_processes":
             observation = f"Running PIDs: {list(self.state['active_processes'].keys())} - Names: {list(self.state['active_processes'].values())}"
             reward = -0.1
 
-        # ACTION 3: Kill a Process
         elif action.startswith("kill_process"):
             parts = action.split()
             if len(parts) == 2:
                 pid = parts[1]
-                if pid == "9999":
-                    # SUCCESS! The AI found the malware.
-                    self.state["cpu_usage"] = 12.0
-                    self.state["system_health"] = "STABLE"
+                if pid == self.malware_pid:
+                    self.state["cpu_usage"] = 15.0
+                    self.malware_killed = True
                     del self.state["active_processes"][pid]
-                    observation = f"SUCCESS: Process {pid} terminated. CPU dropped to 12%. System restored."
-                    reward = 1.0 # Max points!
-                    done = True
+                    observation = f"SUCCESS: Process {pid} terminated. CPU stabilized. However, Nginx is still OFFLINE."
+                    reward = 0.5 # Half points for neutralizing the threat
                 elif pid in self.state["active_processes"]:
-                    # AI killed a good process
-                    observation = f"ERROR: Killed {pid} ({self.state['active_processes'][pid]}), but CPU is still high. You broke a vital service."
-                    reward = -0.5
+                    observation = f"CRITICAL ERROR: You killed {self.state['active_processes'][pid]}! System unstable."
+                    reward = -0.8
                 else:
                     observation = f"ERROR: PID {pid} not found."
-                    reward = -0.2
+                    reward = -0.1
             else:
-                observation = "ERROR: Invalid command format. Use 'kill_process <pid>'"
-                reward = -0.2
-        else:
-            observation = f"ERROR: Unknown command '{action}'. Available commands: [check_metrics, list_processes, kill_process <pid>]"
-            reward = -0.2
+                observation = "ERROR: Use format 'kill_process <pid>'"
+                reward = -0.1
 
-        # Check for timeout
+        # THE NEW FIX ACTION
+        elif action.startswith("restart_service"):
+            parts = action.split()
+            if len(parts) == 2:
+                service = parts[1]
+                if service == "nginx_web_server":
+                    if self.malware_killed:
+                        self.state["services"]["nginx_web_server"] = "ONLINE"
+                        self.state["system_health"] = "STABLE"
+                        observation = "SUCCESS: Nginx restarted safely. System fully restored!"
+                        reward = 1.0 # Full points for actually fixing it!
+                        done = True
+                    else:
+                        observation = "ERROR: Nginx failed to start. CPU is too high. You must kill the rogue process first."
+                        reward = -0.3
+                else:
+                    observation = f"ERROR: Service '{service}' not recognized."
+                    reward = -0.1
+            else:
+                observation = "ERROR: Use format 'restart_service <name>'"
+                reward = -0.1
+        else:
+            observation = f"ERROR: Unknown command. Allowed: [check_metrics, list_processes, kill_process <pid>, restart_service <name>]"
+            reward = -0.1
+
         if self.step_count >= self.max_steps and not done:
             done = True
             observation += " | CRITICAL FAILURE: Maximum steps reached. Server crashed."
             reward = -1.0
             self.state["system_health"] = "OFFLINE"
 
-        # Push updates to the UI
         self.update_telemetry(f"> {action}\n{observation}", reward)
-        
-        # Pause briefly so the UI update looks cool and natural
         time.sleep(1.5) 
 
         return observation, reward, done
