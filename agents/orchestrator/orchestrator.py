@@ -26,6 +26,8 @@ class Orchestrator:
         # 1. Investigate
         self.timeline.append("Investigation started.")
         evidence = self.investigation_agent.investigate(incident)
+        if hasattr(self.investigation_agent, 'timeline'):
+            self.timeline.extend(self.investigation_agent.timeline)
         timestamps["acknowledged_time"] = time.time()
         
         # 2. RCA
@@ -36,6 +38,8 @@ class Orchestrator:
         # 3. Plan
         self.timeline.append("Remediation planning started.")
         plan = self.planning_agent.create_plan(rca_result)
+        if hasattr(self.planning_agent, 'timeline'):
+            self.timeline.extend(self.planning_agent.timeline)
         
         # 4. Remediate & Verify
         self.timeline.append("Executing remediation plan.")
