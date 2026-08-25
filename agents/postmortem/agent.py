@@ -1,3 +1,4 @@
+import os
 from environment.incidents.models import Incident
 from rca.engine import RCA_Result
 from typing import List, Any, Dict
@@ -9,21 +10,25 @@ class PostmortemAgent:
         
         timestamps = timestamps or {}
         start = timestamps.get("start_time", incident.timestamp.timestamp())
-        detected = timestamps.get("detected_time", start + 5)
-        acknowledged = timestamps.get("acknowledged_time", detected + 2)
-        recovered = timestamps.get("recovered_time", acknowledged + 30)
+        detected = timestamps.get("detected_time")
+        acknowledged = timestamps.get("acknowledged_time")
+        recovered = timestamps.get("recovered_time")
         
-        mttd = int(detected - start)
-        mtta = int(acknowledged - detected)
-        mttr = int(recovered - start)
-        recovery_time = mttr
+        def safe_time_diff(end, start_val):
+            return int(end - start_val) if end and start_val else "N/A"
+            
+        mttd = safe_time_diff(detected, start)
+        mtta = safe_time_diff(acknowledged, detected) if detected else "N/A"
+        mttr = safe_time_diff(recovered, start)
+        recovery_time = mttr if mttr != "N/A" else 0
         
         start_time_str = datetime.fromtimestamp(start, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         
         successful_actions = [r for r in remediation_results if r.verification_status == "SUCCESS"]
         failed_actions = [r for r in remediation_results if r.verification_status != "SUCCESS"]
         
-        business_impact = f"${(recovery_time / 60.0) * 1400:.2f} (Estimated)"
+        impact_per_min = float(os.environ.get("BUSINESS_IMPACT_PER_MINUTE", "1400.0"))
+        business_impact = f"${(recovery_time / 60.0) * impact_per_min:.2f} (Estimated using configured simulation assumptions)"
         
         report = f"# INCIDENT POSTMORTEM: {incident.incident_id}\n\n"
         

@@ -28,16 +28,19 @@ def main():
     
     # 2. Setup Tools
     registry = ToolRegistry()
-    registry.register(RestartServiceTool())
-    registry.register(TerminateProcessTool())
+    registry.register(RestartServiceTool(env))
+    registry.register(TerminateProcessTool(env))
     
     # 3. Setup Agents
     graph = DependencyGraph()
     memory_store = IncidentMemoryStore()
     
+    from agents.remediation.what_if import WhatIfEngine
+    whatif = WhatIfEngine(registry, env)
+    
     investigation_agent = InvestigationAgent(env.signals, env.metrics)
     rca_agent = RCAAgent(RCAEngine(graph))
-    planning_agent = PlanningAgent()
+    planning_agent = PlanningAgent(whatif)
     remediation_engine = RemediationEngine(registry, env.metrics)
     postmortem_agent = PostmortemAgent()
     

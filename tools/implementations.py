@@ -33,22 +33,26 @@ class RestartServiceTool(BaseTool):
     parameters = {"service_name": "str"}
     risk_level = RiskLevel.MEDIUM
 
+    def __init__(self, env=None):
+        self.env = env
+        super().__init__()
+
     def validate(self, **kwargs) -> bool:
         return "service_name" in kwargs and isinstance(kwargs["service_name"], str)
 
     def execute(self, **kwargs) -> ToolResult:
         service_name = kwargs["service_name"]
-        metrics_store = kwargs.get("_metrics_store")
         
-        if metrics_store:
-            # Simulate recovery
-            metrics_store.record("db_connections", 50.0)
-            metrics_store.record("api_latency", 20.0)
-            metrics_store.record("cpu_usage", 15.0)
+        if self.env:
+            self.env.reset_service(service_name)
+            return ToolResult(
+                success=True,
+                output=f"Successfully restarted service: {service_name}"
+            )
             
         return ToolResult(
-            success=True,
-            output=f"Successfully restarted service: {service_name}"
+            success=False,
+            output="Simulation environment not attached."
         )
 
 class TerminateProcessTool(BaseTool):
@@ -57,18 +61,30 @@ class TerminateProcessTool(BaseTool):
     parameters = {"pid": "int"}
     risk_level = RiskLevel.HIGH
 
+    def __init__(self, env=None):
+        self.env = env
+        super().__init__()
+
     def validate(self, **kwargs) -> bool:
         return "pid" in kwargs
 
     def execute(self, **kwargs) -> ToolResult:
         pid = kwargs["pid"]
-        metrics_store = kwargs.get("_metrics_store")
         
-        if metrics_store:
-            # Simulate recovery
-            metrics_store.record("cpu_usage", 15.0)
-            
+        if self.env:
+            success = self.env.remove_process(pid)
+            if success:
+                return ToolResult(
+                    success=True,
+                    output=f"Process {pid} terminated successfully."
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    output=f"Process {pid} not found."
+                )
+                
         return ToolResult(
-            success=True,
-            output=f"Process {pid} terminated."
+            success=False,
+            output="Simulation environment not attached."
         )

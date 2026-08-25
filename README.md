@@ -114,6 +114,7 @@ pytest tests/test_benchmarker.py
 ```
 
 ## Example Incident
+*(Example deterministic simulation run)*
 
 ```text
 Incident:
@@ -212,7 +213,7 @@ pytest tests/test_benchmarker.py
 
 ## Research / Engineering Value
 
-AutoSRE serves as a highly modular foundation for studying the safety and efficacy of AI in critical infrastructure. By forcing the agent to prove its reasoning against a stateful environment, the project moves beyond text summarization into true agentic systems engineering.
+AutoSRE serves as a highly modular foundation for studying the safety and efficacy of AI in critical infrastructure. By forcing the agent to prove its reasoning against a stateful environment, the project provides a controlled environment for evaluating agentic SRE workflows.
 
 ## Contributing
 

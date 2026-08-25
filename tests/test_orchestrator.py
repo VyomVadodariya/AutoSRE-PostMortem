@@ -12,20 +12,28 @@ from environment.observability.metrics import MetricsStore
 from environment.incidents.generator import IncidentGenerator
 
 def test_orchestrator_full_flow():
-    # Setup Tools
-    registry = ToolRegistry()
-    registry.register(RestartServiceTool())
-    registry.register(TerminateProcessTool())
-    
     # Setup Environment/Signals
     metrics = MetricsStore()
     graph = DependencyGraph()
     graph.add_service("nginx")
     
+    from environment.observability.signals import SignalStore
+    from environment.simulation import SimulationEnvironment
+    env = SimulationEnvironment(metrics, SignalStore())
+    
+    # Setup Tools
+    registry = ToolRegistry()
+    registry.register(RestartServiceTool(env))
+    registry.register(TerminateProcessTool(env))
+    
     # Setup Sub-Agents
+    from agents.remediation.what_if import WhatIfEngine
+    
+    whatif = WhatIfEngine(registry, env)
+    
     investigation = InvestigationAgent(None, metrics)
     rca = RCAAgent(RCAEngine(graph))
-    planning = PlanningAgent()
+    planning = PlanningAgent(whatif)
     remediation = RemediationEngine(registry, metrics)
     postmortem = PostmortemAgent()
     

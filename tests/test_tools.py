@@ -15,8 +15,14 @@ def test_tool_registration():
     assert tool_missing is None
 
 def test_tool_validation():
+    from environment.observability.signals import SignalStore
+    from environment.observability.metrics import MetricsStore
+    from environment.simulation import SimulationEnvironment
+    env = SimulationEnvironment(MetricsStore(), SignalStore())
+    env.inject_process(pid=1234, name="test", cpu=10.0, memory=10.0)
+    
     registry = ToolRegistry()
-    registry.register(TerminateProcessTool())
+    registry.register(TerminateProcessTool(env))
     
     # Missing required 'pid' parameter
     result = registry.execute_tool("kill_process")

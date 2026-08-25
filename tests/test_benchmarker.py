@@ -20,18 +20,26 @@ def test_benchmarker():
     injector = ChaosInjector(generator)
     evaluator = ChaosEvaluator()
     
-    registry = ToolRegistry()
-    registry.register(RestartServiceTool())
-    registry.register(TerminateProcessTool())
-    
     metrics = MetricsStore()
     graph = DependencyGraph()
+    
+    from agents.remediation.what_if import WhatIfEngine
+    from environment.observability.signals import SignalStore
+    from environment.simulation import SimulationEnvironment
+    
+    env = SimulationEnvironment(metrics, SignalStore())
+    
+    registry = ToolRegistry()
+    registry.register(RestartServiceTool(env))
+    registry.register(TerminateProcessTool(env))
+    
+    whatif = WhatIfEngine(registry, env)
     
     # Setup Orchestrator (Simulated AutoSRE Agent)
     orchestrator = Orchestrator(
         InvestigationAgent(None, metrics),
         RCAAgent(RCAEngine(graph)),
-        PlanningAgent(),
+        PlanningAgent(whatif),
         RemediationEngine(registry, metrics),
         PostmortemAgent()
     )

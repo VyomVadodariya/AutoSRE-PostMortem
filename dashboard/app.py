@@ -39,10 +39,13 @@ if 'env' not in st.session_state:
     graph = DependencyGraph()
     graph.add_service("nginx")
     
+    from agents.remediation.what_if import WhatIfEngine
+    whatif = WhatIfEngine(registry, st.session_state.env)
+    
     st.session_state.orchestrator = Orchestrator(
         InvestigationAgent(signals, metrics),
         RCAAgent(RCAEngine(graph)),
-        PlanningAgent(),
+        PlanningAgent(whatif),
         RemediationEngine(registry, metrics),
         PostmortemAgent()
     )
@@ -66,11 +69,21 @@ if page == "Overview":
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("SLO Target", "99.95%")
     
-    availability = "99.99%" if metrics_state.get("cpu_usage", 0) < 50 else "99.82%"
-    delta = "-0.17%" if availability == "99.82%" else "+0.04%"
+    # Assuming simulated request tracking in MetricsStore
+    total_requests = metrics_state.get("total_requests", 10000)
+    failed_requests = metrics_state.get("failed_requests", 0)
+    success_requests = total_requests - failed_requests
+    
+    if total_requests > 0:
+        availability_pct = (success_requests / total_requests) * 100
+        availability = f"{availability_pct:.2f}%"
+    else:
+        availability = "100.00%"
+        
+    delta = "-0.17%" if float(availability.strip('%')) < 99.95 else "+0.04%"
     
     c2.metric("Current Availability", availability, delta, delta_color="inverse")
-    c3.metric("Error Budget Consumed", "74%", "+12%" if availability == "99.82%" else "-1%", delta_color="inverse")
+    c3.metric("Error Budget Consumed", f"{(failed_requests/500)*100:.1f}%", "+12%" if float(availability.strip('%')) < 99.95 else "-1%", delta_color="inverse")
     
     if st.session_state.agent_result:
         mttr_str = "SUCCESS" if st.session_state.agent_result.get("recovery_success") else "FAILED"

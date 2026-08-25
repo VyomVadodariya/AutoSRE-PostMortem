@@ -6,11 +6,16 @@ from agents.remediation.what_if import WhatIfEngine
 from policies.risk.levels import RiskLevel
 
 def test_remediation_engine():
-    registry = ToolRegistry()
-    registry.register(TerminateProcessTool())
-    
+    from environment.observability.signals import SignalStore
+    from environment.simulation import SimulationEnvironment
     metrics = MetricsStore()
     metrics.record("cpu_usage", 99.0)
+    
+    env = SimulationEnvironment(metrics, SignalStore())
+    env.inject_process(pid=1234, name="rogue", cpu=80.0, memory=10.0)
+    
+    registry = ToolRegistry()
+    registry.register(TerminateProcessTool(env))
     
     engine = RemediationEngine(registry, metrics)
     
