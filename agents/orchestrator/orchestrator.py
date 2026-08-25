@@ -18,13 +18,16 @@ class Orchestrator:
     def handle_incident(self, incident: Incident) -> Dict[str, Any]:
         timestamps = {}
         # Use actual incident injection time
-        timestamps["start_time"] = incident.timestamp.timestamp()
+        timestamps["incident_created"] = incident.timestamp.timestamp()
+        timestamps["start_time"] = timestamps["incident_created"]
         
         self.timeline.append(f"Incident {incident.incident_id} detected.")
-        timestamps["detected_time"] = time.time()
+        timestamps["anomaly_detected"] = time.time()
+        timestamps["detected_time"] = timestamps["anomaly_detected"]
         
         # 1. Investigate
         self.timeline.append("Investigation started.")
+        timestamps["investigation_started"] = time.time()
         evidence = self.investigation_agent.investigate(incident)
         if hasattr(self.investigation_agent, 'timeline'):
             self.timeline.extend(self.investigation_agent.timeline)
@@ -32,23 +35,27 @@ class Orchestrator:
         
         # 2. RCA
         self.timeline.append("Root Cause Analysis started.")
+        timestamps["rca_started"] = time.time()
         rca_result = self.rca_agent.analyze(incident, evidence)
+        timestamps["rca_completed"] = time.time()
         self.timeline.append(f"Root cause identified: {rca_result.root_cause}")
         
         # 3. Plan
         self.timeline.append("Remediation planning started.")
+        timestamps["plan_created"] = time.time()
         plan = self.planning_agent.create_plan(rca_result)
         if hasattr(self.planning_agent, 'timeline'):
             self.timeline.extend(self.planning_agent.timeline)
         
         # 4. Remediate & Verify
         self.timeline.append("Executing remediation plan.")
+        timestamps["remediation_started"] = time.time()
         remediation_results = []
         recovery_success = True
         
         for action in plan.actions:
             tool_name = action["tool_name"]
-            params = action["parameters"]
+            params = action.get("parameters", {})
             
             res = self.remediation_engine.execute_and_verify(tool_name, params)
             remediation_results.append(res)
@@ -59,15 +66,20 @@ class Orchestrator:
                 recovery_success = False
                 break
                 
+        timestamps["remediation_completed"] = time.time()
+        timestamps["verification_started"] = time.time()
+        
         if recovery_success:
             self.timeline.append("Recovery verified. Service restored.")
+            timestamps["recovery_verified"] = time.time()
+            timestamps["recovered_time"] = timestamps["recovery_verified"]
         else:
             self.timeline.append("Recovery failed. Further investigation required.")
+            timestamps["recovered_time"] = None
             
-        timestamps["recovered_time"] = time.time()
-        
         # 5. Postmortem
         report = self.postmortem_agent.generate(incident, rca_result, remediation_results, timestamps)
+        timestamps["postmortem_generated"] = time.time()
         self.timeline.append("Postmortem generated.")
         
         return {
@@ -75,5 +87,7 @@ class Orchestrator:
             "recovery_success": recovery_success,
             "timeline": self.timeline,
             "postmortem": report,
-            "tokens_used": 1500 # Real LLM token tracker hook goes here
+            "timestamps": timestamps,
+            "tokens_used": "N/A",
+            "cost": "N/A"
         }

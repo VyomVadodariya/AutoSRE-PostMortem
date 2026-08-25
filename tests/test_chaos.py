@@ -21,6 +21,11 @@ def test_chaos_evaluator():
             "Investigation started.",
             "Action 'kill_process' verified as SUCCESS"
         ],
+        "timestamps": {
+            "investigation_started": 1.0,
+            "start_time": 100.0,
+            "recovered_time": 200.0
+        },
         "postmortem": "The root cause was CPU exhaustion due to a crypto miner."
     }
     

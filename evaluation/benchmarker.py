@@ -36,6 +36,8 @@ class Benchmarker:
                 # We extract real tokens if the agent returns it.
                 agent_output = orchestrator.handle_incident(incident)
                 tokens = agent_output.get("tokens_used", 0) 
+                if tokens == "N/A":
+                    tokens = 0
                 
                 # 3. Evaluate against hidden truth
                 eval_result = self.evaluator.evaluate(hidden_truth, agent_output)

@@ -1,121 +1,121 @@
 # AutoSRE
 
 ## Overview
+AutoSRE is an AI-assisted SRE simulation and incident-response platform for evaluating automated incident detection, investigation, root-cause analysis, remediation planning, verification, and post-mortem generation in a controlled environment.
 
-Modern production systems generate large volumes of metrics, logs, events, and alerts. During an incident, SRE teams must rapidly identify the cause, select a safe remediation, verify recovery, and document the incident.
+## Problem
+Modern production systems generate large volumes of metrics, logs, events, and alerts. During an incident, SRE teams must rapidly identify the cause, select a safe remediation, verify recovery, and document the incident. Testing autonomous agents in real production environments is too dangerous.
 
-AutoSRE explores how an AI-driven agent can automate this workflow inside a controlled simulation environment. It acts as an autonomous incident response platform that monitors telemetry, investigates anomalies using controlled tools, deduces root causes via dependency graphs, and safely executes allowed remediations.
-
-## Why AutoSRE?
-
+## Solution
 AutoSRE provides a robust testing ground for AI in operations. Rather than acting as a simple text-based chatbot, AutoSRE operates as a stateful, ReAct-driven loop. The simulated environment accurately mimics infrastructure behavior—terminating a runaway process naturally causes CPU metrics to drop and error rates to recover, allowing the AI's logic to be rigorously evaluated in a safe, closed loop.
 
 ## Key Capabilities
-
 | Capability | Status |
 |------------|--------|
-| Dynamic incidents | Implemented |
+| Dynamic incident generation | Implemented |
+| Stateful simulation | Implemented |
 | Time-series telemetry | Implemented |
 | Anomaly detection | Implemented |
-| Evidence-driven RCA | Implemented |
-| Risk-aware remediation | Implemented |
+| Evidence-based RCA | Implemented |
+| Risk-aware planning | Implemented |
+| What-if simulation | Implemented |
 | Remediation verification | Implemented |
 | Incident memory | Experimental |
-| Chaos engineering | Implemented |
-| Benchmarking | Implemented |
+| Real embeddings | Experimental |
 | Kubernetes integration | Experimental |
+| Real production observability | Not implemented |
 
 ## Architecture
-
 ```text
-                 Incident Generator
-                        |
-                        v
-                Simulation Environment
-                        |
-            +-----------+-----------+
-            |           |           |
-         Metrics      Logs      Services
-            |           |           |
-            +-----------+-----------+
-                        |
-                 Investigation Agent
-                        |
-                     Evidence
-                        |
-                   RCA Agent
-                        |
-                Remediation Planner
-                        |
-                  Risk / Policy
-                        |
-              Human Approval Layer
-                        |
-                 Remediation
-                        |
-                  Verification
-                        |
-                    Recovery
-                        |
-                  Postmortem
-                        |
-                 Incident Memory
-                        |
-                   Benchmarking
+                    Incident Generator
+                           |
+                           v
+                  Simulation Environment
+                           |
+             +-------------+-------------+
+             |             |             |
+          Metrics        Logs        Services
+             |             |             |
+             +-------------+-------------+
+                           |
+                  Investigation Agent
+                           |
+                        Evidence
+                           |
+                     RCA Engine
+                           |
+                  Candidate Actions
+                           |
+                     What-If Engine
+                           |
+                     Risk Policy
+                           |
+                  Human Approval
+                           |
+                    Remediation
+                           |
+                    Verification
+                           |
+                       Recovery
+                           |
+                     Postmortem
+                           |
+                    Incident Memory
+                           |
+                      Benchmark
 ```
 
-## End-to-End Incident Lifecycle
-
+## Incident Lifecycle
 AutoSRE guides an incident through a deterministic, logic-driven lifecycle. The system is evaluated not on whether it blindly guesses a fix, but on how it reasons through evidence.
 
-## AI Agent Architecture
-
+## Agent Architecture
 The system employs a multi-agent orchestrated architecture governed by strict risk policies:
 * **Orchestrator**: Manages the incident lifecycle state machine.
 * **Investigation Agent**: Queries the state pool (processes, logs, networks) to extract anomalous evidence using a controlled tool budget.
-* **RCA Agent**: Synthesizes evidence to isolate the probable root cause from a complex web of symptoms.
-* **Planning Agent**: Extracts actionable parameters (like specific PIDs) from evidence and formulates a targeted remediation plan.
+* **RCA Agent**: Synthesizes evidence to isolate the probable root cause from a complex web of symptoms using hypothesis scoring.
+* **Planning Agent**: Formulates a targeted remediation plan based on What-If counterfactual simulations.
 * **Postmortem Agent**: Synthesizes the timeline and telemetry into a compliant report.
 
 ## Simulation Environment
-
 The project features a fully stateful simulator. Infrastructure state (active processes, database connections, active services) directly dictates the generated metrics. Remediations mutate this underlying state (e.g., removing a rogue process), causing metrics to naturally recover. 
 
 ## Observability
-
 Telemetry is exposed via a dynamic `MetricsStore` and `SignalStore`. The agent does not cheat by accessing hidden ground-truth data; it relies entirely on its ability to request historical metrics and sift through simulated logs.
 
-## Root Cause Analysis
+## Evidence-Based RCA
+RCA is structured via hypothesis scoring and semantic evaluation rather than naive keyword matching. The agent's diagnosis must align with the correct failure category, pinpoint the correct underlying entity, and generate a causal chain based on supporting and contradicting evidence.
 
-RCA is structured via semantic evaluation rather than naive keyword matching. The agent's diagnosis must align with the correct failure category and pinpoint the correct underlying entity (such as a database pool vs. a generic network timeout).
+## Intelligent Remediation
+Remediation candidate generation relies on the active tool registry and contextual evidence. The planning agent evaluates multiple tools against the current state before committing to an action.
 
-## Remediation & Safety
+## Safety Model
+Actions carry inherent risk levels (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`). `HIGH` risk actions mandate explicit approval policies.
 
-Remediation is governed by a strict `ToolRegistry` and a What-If evaluation engine.
-* Actions carry inherent risk levels (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`).
-* `HIGH` risk actions mandate explicit approval policies.
-* Remediation success is never assumed; the verification engine checks post-action telemetry against baseline health before closing an incident.
+## What-If Simulation
+The What-If engine performs true counterfactual simulation by deep-copying the `SimulationEnvironment`, executing the candidate tool on the clone, and comparing the predicted telemetry against the original state to calculate confidence and risk recommendations.
+
+## Verification
+Remediation success is never assumed; the verification engine checks post-action telemetry against baseline health before closing an incident.
 
 ## Incident Memory
-
 *(Experimental)* Previous incident vectors can be stored to improve future RCA accuracy. Production mode aims to support real embeddings, while the current test mode relies on deterministic mock representations.
 
 ## Chaos Engineering
-
 The Chaos Injector can seamlessly simulate targeted failure classes: Infrastructure exhaustion, Network Latency, Database Failures, Security Incidents, and Cascading Multi-Service Failures. 
 
 ## Benchmarking
-
-Benchmark results are generated from repeated incident simulations across multiple scenarios. Results should be regenerated using the benchmark suite rather than hard-coded into the documentation. 
-
-To execute the benchmark tests (using `pytest` as the current automated runner):
-```bash
-pytest tests/test_benchmarker.py
-```
+Benchmark methodology:
+1. Generate incident
+2. Hide ground-truth root cause
+3. Expose telemetry
+4. Run agent
+5. Record actions
+6. Verify recovery
+7. Compare prediction with ground truth
+8. Calculate metrics
 
 ## Example Incident
 *(Example deterministic simulation run)*
-
 ```text
 Incident:
 Crypto-mining process injected.
@@ -128,10 +128,11 @@ Agent runs `get_metric_history()` and `list_processes()`.
 Discovers Process 'xmrig' (PID 8472) consumes 84% CPU.
 
 RCA:
-Suspicious process is the probable root cause.
+Hypothesis scoring selects Crypto miner.
+Causal chain generated.
 
 Plan:
-Terminate process 8472.
+What-If evaluates multiple actions. Terminate process 8472 selected.
 
 Risk:
 HIGH — approval required.
@@ -140,20 +141,51 @@ Execution:
 Process terminated.
 
 Verification:
-CPU recovered from 97% to 19%.
+CPU recovered. System stable.
 
 Result:
 Incident resolved.
 
 Postmortem:
-Generated automatically.
+Generated automatically with MTTR tracking.
 ```
 
 ## Dashboard
-
 The project includes a live Streamlit dashboard that binds directly to the running `SimulationEnvironment`. 
 
-When chaos is injected from the UI, the dashboard dynamically surfaces the Orchestrator's internal thought traces, active remediation plans, and live shifts in the metric graphs. 
+## Installation
+```bash
+git clone <repository>
+cd AutoSRE-PostMortem
+
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+pip install -e .
+```
+
+## Quick Start
+```bash
+pytest -q
+```
+Then start the dashboard:
+```bash
+streamlit run dashboard/app.py
+```
+
+## Running Tests
+Tests are structured natively using pytest.
+```bash
+pytest -q
+```
+
+## Running Benchmarks
+Run the benchmark suite with configurable episodes:
+```bash
+python -m run_benchmark --episodes 50
+```
 
 ## Project Structure
 * `agents/`: Core AI agent loops (Investigation, Planning, RCA, Postmortem)
@@ -163,48 +195,16 @@ When chaos is injected from the UI, the dashboard dynamically surfaces the Orche
 * `tools/`: Tool registry and strict execution policies
 * `tests/`: Automated test suite for all modules
 
-## Installation
-
-```bash
-pip install -r requirements.txt
-# Alternatively, using uv:
-uv sync
-```
-
-## Configuration
-No external configurations or API keys are required for the simulated environment.
-
-## Running the Project
-
-To launch the real-time SRE Dashboard:
-```bash
-streamlit run dashboard/app.py
-```
-
-## Running Tests
-
-Tests are structured natively using pytest.
-```bash
-pytest -q
-```
-
-## Running Benchmarks
-
-```bash
-pytest tests/test_benchmarker.py
-```
-
 ## Limitations
-
-- Current environment is primarily simulated.
-- Kubernetes integration may be experimental.
-- Production observability integrations are not enabled by default.
-- LLM performance depends on the selected model (currently mocked internally for testing without API keys).
-- Benchmark results depend on incident distribution.
-- Simulation results should not be interpreted as real production MTTR.
+Current limitations may include:
+- The default environment is simulated.
+- Production Kubernetes control is not enabled by default.
+- Real observability integrations may require additional configuration.
+- LLM quality depends on the selected model.
+- Benchmark results depend on scenario distribution.
+- Business impact is an estimate within the simulation.
 
 ## Roadmap
-
 * **Phase 1**: Core simulation + incident response (Completed)
 * **Phase 2**: Improved agent reasoning + memory
 * **Phase 3**: Real observability integrations
@@ -212,13 +212,7 @@ pytest tests/test_benchmarker.py
 * **Phase 5**: Large-scale agent benchmarking
 
 ## Research / Engineering Value
-
 AutoSRE serves as a highly modular foundation for studying the safety and efficacy of AI in critical infrastructure. By forcing the agent to prove its reasoning against a stateful environment, the project provides a controlled environment for evaluating agentic SRE workflows.
 
-## Contributing
-
-Contributions are welcome. Please ensure that tests pass (`pytest -q`) and that new modules preserve the state-driven simulation architecture.
-
 ## License
-
 MIT

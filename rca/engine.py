@@ -11,6 +11,7 @@ class RCA_Result(BaseModel):
     impact: str
     evidence: List[Evidence]
     confidence: float
+    causal_chain: List[str] = []
 
 class RCAEngine:
     """
@@ -20,7 +21,7 @@ class RCAEngine:
     def __init__(self, dependency_graph: DependencyGraph):
         self.dependency_graph = dependency_graph
         
-    def generate_rca(self, incident: Incident, evidence_collected: List[Evidence], deduced_cause: str) -> RCA_Result:
+    def generate_rca(self, incident: Incident, evidence_collected: List[Evidence], deduced_cause: str, causal_chain: List[str] = None) -> RCA_Result:
         # Calculate impact based on the dependency graph
         all_affected = set(incident.services_affected)
         for s in incident.services_affected:
@@ -43,5 +44,6 @@ class RCAEngine:
             contributing_factors=incident.contributing_factors,
             impact=impact_statement,
             evidence=evidence_collected,
-            confidence=round(confidence, 2)
+            confidence=round(confidence, 2),
+            causal_chain=causal_chain or []
         )

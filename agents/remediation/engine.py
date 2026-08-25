@@ -38,12 +38,18 @@ class RemediationEngine:
         else:
             # Check if any anomalous metric in before_state was resolved in after_state
             resolved = False
+            ignore_metrics = ["total_requests", "failed_requests"]
+            
             for k, v in before_state.items():
+                if k in ignore_metrics:
+                    continue
                 if v > 80.0 and after_state.get(k, 0.0) < 80.0:
                     resolved = True
             
             # If we didn't have anomalous metrics, or they were resolved
-            if resolved or not any(v > 80.0 for v in before_state.values()):
+            anomalous = any(v > 80.0 for k, v in before_state.items() if k not in ignore_metrics)
+            
+            if resolved or not anomalous:
                 status = "SUCCESS"
                 confidence = 0.95
             else:

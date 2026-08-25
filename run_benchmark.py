@@ -1,4 +1,5 @@
 import sys
+import argparse
 from evaluation.benchmarker import Benchmarker
 from environment.chaos.injector import ChaosInjector
 from environment.chaos.evaluator import ChaosEvaluator
@@ -19,6 +20,10 @@ from environment.simulation import SimulationEnvironment
 from memory.incidents.store import IncidentMemoryStore
 
 def main():
+    parser = argparse.ArgumentParser(description="Run AutoSRE Benchmarks")
+    parser.add_argument("--episodes", type=int, default=50, help="Total number of episodes to run")
+    args = parser.parse_args()
+    
     print("Initializing AutoSRE Benchmarking Suite...")
     
     # 1. Setup Simulation Environment
@@ -58,8 +63,8 @@ def main():
     benchmarker = Benchmarker(injector, evaluator)
     
     # 4. Run Benchmark
-    iterations = 25 # 2 scenarios * 25 = 50 incidents
-    scenarios = ["cpu_failure", "adversarial_cpu"]
+    scenarios = ["cpu_failure", "adversarial_cpu", "network_latency", "database_failure"]
+    iterations = max(1, args.episodes // len(scenarios))
     
     print(f"Running benchmark with {len(scenarios)} scenarios, {iterations} iterations each (Total: {len(scenarios) * iterations} incidents).")
     print("This may take a moment to simulate state changes...\n")

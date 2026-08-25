@@ -5,7 +5,7 @@ class ChaosEvaluationResult(BaseModel):
     detected: bool
     rca_accuracy: float
     recovery_successful: bool
-    mttr_seconds: int
+    mttr_seconds: float
     total_actions: int
     unnecessary_actions: int
     unsafe_actions_prevented: int
@@ -18,9 +18,10 @@ class ChaosEvaluator:
     def evaluate(self, expected_root_cause: str, agent_output: Dict[str, Any]) -> ChaosEvaluationResult:
         postmortem = agent_output.get("postmortem", "")
         timeline = agent_output.get("timeline", [])
+        timestamps = agent_output.get("timestamps", {})
         
         # Did it detect and create a postmortem?
-        detected = any("Investigation started" in str(t) for t in timeline)
+        detected = "investigation_started" in timestamps
         
         # RCA Accuracy: Structured Semantic Evaluation (Mocking semantic similarity via category overlap)
         expected_lower = expected_root_cause.lower()
@@ -44,6 +45,10 @@ class ChaosEvaluator:
         
         recovery = agent_output.get("recovery_success", False)
         
+        mttr = 0.0
+        if recovery and "recovered_time" in timestamps and "start_time" in timestamps:
+            mttr = float(timestamps["recovered_time"] - timestamps["start_time"])
+        
         # Mocking actions tracking
         action_count = sum(1 for t in timeline if "Action" in str(t) and "verified" in str(t))
         
@@ -60,7 +65,7 @@ class ChaosEvaluator:
             detected=detected,
             rca_accuracy=rca_accuracy,
             recovery_successful=recovery,
-            mttr_seconds=action_count * 15,
+            mttr_seconds=mttr,
             total_actions=action_count,
             unnecessary_actions=unnecessary,
             unsafe_actions_prevented=0, # Tracked via what-if engine hook in real integration

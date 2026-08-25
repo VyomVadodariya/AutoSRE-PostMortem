@@ -18,45 +18,55 @@ class PlanningAgent:
         
         # Candidate generation
         candidates = []
-        if "cpu" in cause or "process" in cause or "miner" in cause:
-            candidates.append({"tool_name": "kill_process", "needs_pid": True})
-            candidates.append({"tool_name": "restart_service", "service_name": "api_server"})
-        elif "connection" in cause or "database" in cause:
-            candidates.append({"tool_name": "restart_service", "service_name": "postgresql"})
-            candidates.append({"tool_name": "restart_service", "service_name": "api_server"})
-        else:
-            candidates.append({"tool_name": "restart_service", "service_name": "api_server"})
+        
+        if self.whatif_engine:
+            registered_tools = list(self.whatif_engine.tool_registry._tools.keys())
+            self.timeline.append(f"[Thought]: Available tools: {', '.join(registered_tools)}")
             
-        self.timeline.append(f"[Thought]: Candidate actions generated: {', '.join([c['tool_name'] for c in candidates])}")
+            for tool_name in registered_tools:
+                if tool_name == "kill_process":
+                    match = re.search(r'pid:?\s*(\d+)', evidence_text)
+                    if match:
+                        pid = int(match.group(1))
+                        candidates.append({"tool_name": tool_name, "parameters": {"pid": pid}})
+                elif tool_name == "restart_service":
+                    for svc in ["postgresql", "api_server", "nginx"]:
+                        candidates.append({"tool_name": tool_name, "parameters": {"service_name": svc}})
+                else:
+                    candidates.append({"tool_name": tool_name, "parameters": {}})
+        else:
+            candidates.append({"tool_name": "restart_service", "parameters": {"service_name": "api_server"}})
+            
+        self.timeline.append(f"[Thought]: Candidate actions generated: {len(candidates)} candidates.")
         
         best_action = None
         best_score = -1.0
         
-        if self.whatif_engine:
+        if self.whatif_engine and candidates:
             self.timeline.append(f"[Thought]: Evaluating risk and predicted state for {len(candidates)} candidates using What-If counterfactuals...")
             
             for candidate in candidates:
-                params = {}
-                if candidate.get("needs_pid"):
-                    match = re.search(r'pid:?\s*(\d+)', evidence_text)
-                    if match:
-                        params["pid"] = int(match.group(1))
-                    else:
-                        continue # Can't execute without PID
-                if "service_name" in candidate:
-                    params["service_name"] = candidate["service_name"]
-                    
-                outcome = self.whatif_engine.estimate_outcome(candidate["tool_name"], params)
-                self.timeline.append(f"[What-If Analysis]: Evaluated '{candidate['tool_name']}' -> {outcome.expected_outcome}")
+                tool_name = candidate["tool_name"]
+                params = candidate["parameters"]
+                
+                outcome = self.whatif_engine.estimate_outcome(tool_name, params)
+                self.timeline.append(f"[What-If Analysis]: Evaluated '{tool_name}' with {params} -> {outcome.expected_outcome}")
                 self.timeline.append(f"   ↳ Risk: {outcome.risk.value}, Confidence: {outcome.confidence}, Rec: {outcome.recommendation}")
                 
                 score = outcome.confidence
+                
+                # Root cause alignment bonus
+                if tool_name == "kill_process" and ("miner" in cause or "cpu" in cause):
+                    score += 0.5
+                if tool_name == "restart_service" and params.get("service_name") == "postgresql" and ("database" in cause or "connection" in cause):
+                    score += 0.5
+                
                 if "RECOMMENDED" in outcome.recommendation:
                     score += 1.0 # High priority
                     
                 if score > best_score:
                     best_score = score
-                    best_action = {"tool_name": candidate["tool_name"], "parameters": params}
+                    best_action = candidate
                     
         if best_action:
             self.timeline.append(f"[Decision]: Selected '{best_action['tool_name']}' as the optimal remediation.")

@@ -54,8 +54,8 @@ def test_benchmarker():
     assert result.runs == 3
     # Our mocked agents always succeed in simulation
     assert result.recovery_success_rate == 1.0
-    assert result.token_usage_total > 0
-    assert result.cost_estimate_usd > 0
+    assert result.token_usage_total == 0
+    assert result.cost_estimate_usd == 0.0
     
     report = benchmarker.generate_report([result])
     assert "AutoSRE_v2" in report
