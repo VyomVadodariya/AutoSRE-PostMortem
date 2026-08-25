@@ -31,8 +31,11 @@ def test_orchestrator_full_flow():
     
     whatif = WhatIfEngine(registry, env)
     
+    from memory.incidents.store import IncidentMemoryStore
+    memory_store = IncidentMemoryStore()
+    
     investigation = InvestigationAgent(None, metrics)
-    rca = RCAAgent(RCAEngine(graph))
+    rca = RCAAgent(RCAEngine(graph), memory_store)
     planning = PlanningAgent(whatif)
     remediation = RemediationEngine(registry, metrics)
     postmortem = PostmortemAgent()
@@ -43,7 +46,8 @@ def test_orchestrator_full_flow():
         rca,
         planning,
         remediation,
-        postmortem
+        postmortem,
+        memory_store
     )
     
     # Generate Incident

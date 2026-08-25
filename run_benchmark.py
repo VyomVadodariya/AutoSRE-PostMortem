@@ -44,7 +44,7 @@ def main():
     whatif = WhatIfEngine(registry, env)
     
     investigation_agent = InvestigationAgent(env.signals, env.metrics)
-    rca_agent = RCAAgent(RCAEngine(graph))
+    rca_agent = RCAAgent(RCAEngine(graph), memory_store)
     planning_agent = PlanningAgent(whatif)
     remediation_engine = RemediationEngine(registry, env.metrics)
     postmortem_agent = PostmortemAgent()
@@ -54,7 +54,8 @@ def main():
         rca_agent,
         planning_agent,
         remediation_engine,
-        postmortem_agent
+        postmortem_agent,
+        memory_store
     )
     
     generator = IncidentGenerator()

@@ -5,12 +5,35 @@ class EmbeddingProvider:
     def embed(self, text: str) -> List[float]:
         raise NotImplementedError
 
-class MockEmbeddingProvider(EmbeddingProvider):
+import re
+import math
+from collections import defaultdict
+
+class HashingEmbeddingProvider(EmbeddingProvider):
+    """
+    Dependency-free embedding provider using the hashing trick (Feature Hashing).
+    Maps text into a fixed-dimensional vector space, preserving semantic overlap.
+    """
+    def __init__(self, dimensions: int = 256):
+        self.dimensions = dimensions
+
     def embed(self, text: str) -> List[float]:
-        text = text.lower()
-        val = sum(ord(c) for c in text)
-        words = len(text.split())
-        return [float(val % 100) / 100.0, float(words % 50) / 50.0, float((val * words) % 100) / 100.0]
+        # Tokenize and normalize
+        words = re.findall(r'\b\w+\b', text.lower())
+        
+        # Calculate term frequencies in hashed buckets
+        vector = [0.0] * self.dimensions
+        for word in words:
+            # Use a stable hash modulo dimensions
+            idx = hash(word) % self.dimensions
+            vector[idx] += 1.0
+            
+        # L2 Normalize the vector so cosine similarity works out of the box
+        norm = math.sqrt(sum(v * v for v in vector))
+        if norm > 0:
+            vector = [v / norm for v in vector]
+            
+        return vector
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
     def __init__(self, api_key: str = None):

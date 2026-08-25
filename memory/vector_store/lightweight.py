@@ -1,6 +1,6 @@
 import math
 from typing import List, Tuple, Dict, Any
-from memory.vector_store.embedding import EmbeddingProvider, MockEmbeddingProvider
+from memory.vector_store.embedding import EmbeddingProvider, HashingEmbeddingProvider
 
 class LightweightVectorStore:
     """
@@ -8,7 +8,7 @@ class LightweightVectorStore:
     """
     def __init__(self, embedding_provider: EmbeddingProvider = None):
         self.records: List[Tuple[List[float], Any]] = []
-        self.embedding_provider = embedding_provider or MockEmbeddingProvider()
+        self.embedding_provider = embedding_provider or HashingEmbeddingProvider()
 
     def add_record(self, text_to_embed: str, payload: Any):
         vector = self.embedding_provider.embed(text_to_embed)

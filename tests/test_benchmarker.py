@@ -35,13 +35,17 @@ def test_benchmarker():
     
     whatif = WhatIfEngine(registry, env)
     
+    from memory.incidents.store import IncidentMemoryStore
+    memory_store = IncidentMemoryStore()
+    
     # Setup Orchestrator (Simulated AutoSRE Agent)
     orchestrator = Orchestrator(
         InvestigationAgent(None, metrics),
-        RCAAgent(RCAEngine(graph)),
+        RCAAgent(RCAEngine(graph), memory_store),
         PlanningAgent(whatif),
         RemediationEngine(registry, metrics),
-        PostmortemAgent()
+        PostmortemAgent(),
+        memory_store
     )
     
     benchmarker = Benchmarker(injector, evaluator)

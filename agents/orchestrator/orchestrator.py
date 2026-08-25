@@ -7,12 +7,13 @@ class ActionPlan(BaseModel):
     actions: List[Dict[str, Any]]
 
 class Orchestrator:
-    def __init__(self, investigation_agent, rca_agent, planning_agent, remediation_engine, postmortem_agent):
+    def __init__(self, investigation_agent, rca_agent, planning_agent, remediation_engine, postmortem_agent, memory_store=None):
         self.investigation_agent = investigation_agent
         self.rca_agent = rca_agent
         self.planning_agent = planning_agent
         self.remediation_engine = remediation_engine
         self.postmortem_agent = postmortem_agent
+        self.memory_store = memory_store
         self.timeline: List[str] = []
         
     def handle_incident(self, incident: Incident) -> Dict[str, Any]:
@@ -81,6 +82,23 @@ class Orchestrator:
         report = self.postmortem_agent.generate(incident, rca_result, remediation_results, timestamps)
         timestamps["postmortem_generated"] = time.time()
         self.timeline.append("Postmortem generated.")
+        
+        # 6. Memory Storage
+        if self.memory_store:
+            from memory.incidents.store import IncidentRecord
+            mttr = int(timestamps["recovered_time"] - timestamps["start_time"]) if timestamps.get("recovered_time") else 0
+            
+            record = IncidentRecord(
+                incident_id=incident.incident_id,
+                symptoms=incident.symptoms,
+                root_cause=rca_result.root_cause,
+                actions_taken=[a.action for a in remediation_results],
+                recovery_time_seconds=mttr,
+                postmortem=report,
+                lessons_learned=[f"Recovered {rca_result.root_cause} in {mttr}s using {len(remediation_results)} actions."]
+            )
+            self.memory_store.store_incident(record)
+            self.timeline.append("Incident archived in memory vector store.")
         
         return {
             "incident_id": incident.incident_id,
