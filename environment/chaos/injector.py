@@ -48,5 +48,12 @@ class ChaosInjector:
             if self.env:
                 self.env.metrics.record("db_connections", 1000.0)
                 self.env.signals.add_log(LogEntry(timestamp=time.time(), service="postgresql", level="FATAL", message="sorry, too many clients already"))
+        elif failure_type == "adversarial_cpu":
+            incident._hidden_root_cause = "Database failure causing API retries"
+            incident.symptoms = ["CPU at 95%", "High API latency"]
+            if self.env:
+                self.env.inject_process(pid=5555, name="python", cpu=85.0, memory=10.0)
+                self.env.metrics.record("db_connections", 1000.0)
+                self.env.signals.add_log(LogEntry(timestamp=time.time(), service="postgresql", level="FATAL", message="connection pool exhausted"))
             
         return incident

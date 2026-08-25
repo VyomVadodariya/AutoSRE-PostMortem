@@ -39,11 +39,11 @@ def test_benchmarker():
     benchmarker = Benchmarker(injector, evaluator)
     
     # Run Benchmark
-    scenarios = ["cpu_failure", "database_failure"]
+    scenarios = ["cpu_failure", "database_failure", "adversarial_cpu"]
     result = benchmarker.run_benchmark("AutoSRE_v2", orchestrator, scenarios, iterations=1)
     
     assert result.agent_name == "AutoSRE_v2"
-    assert result.runs == 2
+    assert result.runs == 3
     # Our mocked agents always succeed in simulation
     assert result.recovery_success_rate == 1.0
     assert result.token_usage_total > 0

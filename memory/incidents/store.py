@@ -11,10 +11,12 @@ class IncidentRecord(BaseModel):
     postmortem: str
     lessons_learned: List[str] = Field(default_factory=list)
 
+from memory.vector_store.embedding import EmbeddingProvider
+
 class IncidentMemoryStore:
-    def __init__(self):
+    def __init__(self, embedding_provider: EmbeddingProvider = None):
         self.records: Dict[str, IncidentRecord] = {}
-        self.vector_store = LightweightVectorStore()
+        self.vector_store = LightweightVectorStore(embedding_provider=embedding_provider)
 
     def store_incident(self, record: IncidentRecord):
         self.records[record.incident_id] = record
