@@ -1,35 +1,36 @@
-﻿---
-title: AutoSRE Incident Recovery
-emoji: 🚨
-colorFrom: blue
-colorTo: red
-sdk: docker
-pinned: false
----
-# 🚨 AutoSRE: Autonomous Incident Recovery Environment
+# 🚨 AutoSRE V2: Autonomous AI SRE & Incident Response Platform
 
-**A Reinforcement Learning simulation for training AI to autonomously debug and resolve production server outages.** Built for the Meta PyTorch OpenEnv Hackathon.
+AutoSRE is an advanced, fully autonomous AI agent capable of detecting, investigating, diagnosing, and safely remediating complex infrastructure incidents without human intervention.
 
-### ⏱️ The 10-Second Pitch
-Most AI SRE tools just *read logs* and write post-mortems. **AutoSRE is a live, interactive game board.** We built a Reinforcement Learning environment that simulates a critical production server crash (a crypto-miner maxing out CPU). An autonomous AI agent connects to this environment, strictly uses system commands to investigate, and terminates the malware—all visualized on a real-time, dark-mode telemetry dashboard.
+## 1. Problem
+Traditional AI SRE tools act as basic chat bots that summarize logs. AutoSRE is built as a complete **agentic system** that proactively monitors telemetry, correlates signals, deduces root causes via dependency graphs, and safely executes allowed remediation tools.
 
----
+## 2. Architecture
+The system employs a multi-agent orchestrated architecture:
+* **Orchestrator**: Manages the incident lifecycle state machine.
+* **Detection Agent**: Monitors time-series metrics via EWMA/Z-Score anomaly detection.
+* **Investigation Agent**: Gathers logs, processes, network, and deployment events.
+* **RCA Agent**: Maps symptoms against a Dependency Graph to find the root cause.
+* **Planning Agent**: Formulates a remediation plan.
+* **What-If Engine**: Evaluates counterfactual risk before taking action.
+* **Remediation Agent**: Safely executes tools via the strict Tool Registry.
+* **Verification Agent**: Ensures metrics stabilize before marking the incident resolved.
+* **Postmortem Agent**: Synthesizes the event into an SRE-compliant Markdown report.
 
-## 🏗️ The Architecture (OpenEnv Compliant)
+## 3. Incident Engine & Chaos Testing
+The project includes a robust Chaos Engineering Lab. You can inject specific failure classes (Infrastructure, Network, Database, Security, Cascading) and the `Benchmarker` will evaluate the agent's RCA Accuracy, MTTR, Safety Score, and LLM Token Cost.
 
-We pivoted from a static LLM prompt script to a fully interactive State/Action/Reward environment. AutoSRE is divided into three distinct layers:
-
-* 🎮 **The Game Board (`sre_env.py`)**: The simulation. It maintains the server state, accepts strictly formatted actions, dynamically calculates rewards (+1 for fixing the server, -0.5 for crashing a database), and outputs observations.
-* 🤖 **The Player (`inference.py`)**: The autonomous agent. It connects via proxy, reads the environment's state, and loops through a strict action space (`check_metrics`, `list_processes`, `kill_process`) until the root cause is resolved.
-* 📊 **The Spectator (`dashboard.py`)**: A real-time Streamlit UI. The environment silently dumps state changes to `observation.json`, rendering a live command-center view of the AI's debugging process.
-
----
-
-## 🚀 Quick Start Guide
-
-Want to watch the AI battle the server outage in real-time? You can run the entire simulation locally.
-
-**1. Start the Live Telemetry UI:**
-Open a terminal, activate your virtual environment, and boot the Streamlit dashboard.
+## 4. Usage
+To launch the real-time SRE Dashboard:
 ```bash
-streamlit run dashboard.py
+pip install streamlit pandas pydantic
+streamlit run dashboard/app.py
+```
+
+## 5. Kubernetes Integration (Optional)
+The system is built on an Adapter interface. By swapping `SimulationEnvironment` with the `KubernetesMetricsProvider` (found in `environment/adapters`), the agent can seamlessly control real Prometheus/K8s clusters.
+
+## 6. Testing
+```bash
+python -m pytest tests/
+```
