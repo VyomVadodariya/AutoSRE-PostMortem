@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from tools.base import BaseTool, ToolResult
 from policies.risk.levels import RiskLevel
+import time
 
 class GetMetricsTool(BaseTool):
     name = "get_metrics"
@@ -13,11 +14,17 @@ class GetMetricsTool(BaseTool):
 
     def execute(self, **kwargs) -> ToolResult:
         metric_name = kwargs["metric_name"]
-        # In the future, this calls the MetricsStore
+        metrics_store = kwargs.get("_metrics_store")
+        
+        value = 0.0
+        if metrics_store:
+            latest = metrics_store.get_all_latest()
+            value = latest.get(metric_name, 0.0)
+            
         return ToolResult(
             success=True, 
             output=f"Retrieved metrics for {metric_name}",
-            data={"value": 42.0} # Placeholder
+            data={"value": value}
         )
 
 class RestartServiceTool(BaseTool):
@@ -31,14 +38,21 @@ class RestartServiceTool(BaseTool):
 
     def execute(self, **kwargs) -> ToolResult:
         service_name = kwargs["service_name"]
-        # Simulated restart logic
+        metrics_store = kwargs.get("_metrics_store")
+        
+        if metrics_store:
+            # Simulate recovery
+            metrics_store.record("db_connections", 50.0)
+            metrics_store.record("api_latency", 20.0)
+            metrics_store.record("cpu_usage", 15.0)
+            
         return ToolResult(
             success=True,
             output=f"Successfully restarted service: {service_name}"
         )
 
 class TerminateProcessTool(BaseTool):
-    name = "terminate_process"
+    name = "kill_process"
     description = "Forcefully terminates a process by its PID."
     parameters = {"pid": "int"}
     risk_level = RiskLevel.HIGH
@@ -48,7 +62,12 @@ class TerminateProcessTool(BaseTool):
 
     def execute(self, **kwargs) -> ToolResult:
         pid = kwargs["pid"]
-        # Simulated kill
+        metrics_store = kwargs.get("_metrics_store")
+        
+        if metrics_store:
+            # Simulate recovery
+            metrics_store.record("cpu_usage", 15.0)
+            
         return ToolResult(
             success=True,
             output=f"Process {pid} terminated."

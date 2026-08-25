@@ -8,6 +8,18 @@ class RCAAgent:
         self.engine = rca_engine
 
     def analyze(self, incident: Incident, evidence: List[Evidence]) -> RCA_Result:
-        # In a real system, the AI determines the root cause. Here we mock it.
-        deduced_cause = incident.root_cause
+        deduced_cause = "Unknown service failure"
+        
+        evidence_text = " ".join([e.description.lower() for e in evidence])
+        symptoms = " ".join(incident.symptoms).lower()
+        
+        if "cpu" in evidence_text or "cpu" in symptoms:
+            deduced_cause = "CPU exhaustion"
+        elif "connection" in evidence_text or "database" in symptoms:
+            deduced_cause = "Database connection exhaustion"
+        elif "memory" in evidence_text or "oom" in symptoms:
+            deduced_cause = "Memory exhaustion"
+        elif "latency" in evidence_text or "timeout" in symptoms:
+            deduced_cause = "High network latency"
+            
         return self.engine.generate_rca(incident, evidence, deduced_cause)

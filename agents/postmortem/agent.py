@@ -1,26 +1,28 @@
 from environment.incidents.models import Incident
 from rca.engine import RCA_Result
-from typing import List, Any
+from typing import List, Any, Dict
 from datetime import datetime, timezone
 
 class PostmortemAgent:
-    """
-    Generates a highly detailed, markdown-formatted incident postmortem report
-    following industry SRE standards.
-    """
     def generate(self, incident: Incident, rca_result: RCA_Result, remediation_results: List[Any], 
-                 mttd: int = 15, mtta: int = 5) -> str:
+                 timestamps: Dict[str, float] = None) -> str:
         
-        # Calculate mock recovery time (in a real system, calculate difference between start and end timestamps)
-        recovery_time = len(remediation_results) * 12 # 12 seconds per action simulated
-        mttr = recovery_time
+        timestamps = timestamps or {}
+        start = timestamps.get("start_time", incident.timestamp.timestamp())
+        detected = timestamps.get("detected_time", start + 5)
+        acknowledged = timestamps.get("acknowledged_time", detected + 2)
+        recovered = timestamps.get("recovered_time", acknowledged + 30)
         
-        start_time_str = incident.timestamp.strftime("%Y-%m-%d %H:%M:%S UTC")
+        mttd = int(detected - start)
+        mtta = int(acknowledged - detected)
+        mttr = int(recovered - start)
+        recovery_time = mttr
+        
+        start_time_str = datetime.fromtimestamp(start, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         
         successful_actions = [r for r in remediation_results if r.verification_status == "SUCCESS"]
         failed_actions = [r for r in remediation_results if r.verification_status != "SUCCESS"]
         
-        # Business impact calculation (simulated estimate)
         business_impact = f"${(recovery_time / 60.0) * 1400:.2f} (Estimated)"
         
         report = f"# INCIDENT POSTMORTEM: {incident.incident_id}\n\n"
@@ -73,12 +75,16 @@ class PostmortemAgent:
             report += "- None\n"
         report += "\n"
         
+        # Dynamically generate lessons based on RCA
         report += f"## Lessons Learned\n"
-        report += "- Ensure prompt detection of similar resource exhaustion.\n"
-        report += "- Review dependencies and risk levels for automated remediation.\n\n"
+        if "cpu" in rca_result.root_cause.lower():
+            report += "- Monitor CPU limits more aggressively.\n"
+        elif "connection" in rca_result.root_cause.lower():
+            report += "- Add PgBouncer or connection limits.\n"
+        else:
+            report += "- Review dependencies and risk levels for automated remediation.\n\n"
         
         report += f"## Preventive Actions\n"
-        report += "- Add stricter resource limits to affected containers.\n"
-        report += "- Improve anomaly detection baseline for this service.\n"
+        report += "- Update alerting thresholds.\n"
         
         return report

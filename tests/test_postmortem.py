@@ -3,6 +3,7 @@ from environment.incidents.models import Incident, IncidentClass, IncidentSeveri
 from rca.engine import RCA_Result
 from agents.remediation.engine import RemediationResult
 from datetime import datetime, timezone
+import time
 
 def test_postmortem_generation():
     agent = PostmortemAgent()
@@ -36,12 +37,20 @@ def test_postmortem_generation():
         confidence=0.95
     )
     
-    report = agent.generate(incident, rca, [remediation_res], mttd=10, mtta=3)
+    now = time.time()
+    timestamps = {
+        "start_time": now - 100,
+        "detected_time": now - 90,
+        "acknowledged_time": now - 87,
+        "recovered_time": now
+    }
+    
+    report = agent.generate(incident, rca, [remediation_res], timestamps)
     
     # Assert formatting structure
     assert "# INCIDENT POSTMORTEM: INC-999" in report
     assert "**Severity**: CRITICAL" in report
-    assert "**MTTD**: 10s | **MTTA**: 3s" in report
+    assert "**MTTD**: 10s | **MTTA**: 3s | **MTTR**: 100s" in report
     assert "## Executive Summary" in report
     assert "Crypto miner" in report
     assert "Missing CPU limit" in report

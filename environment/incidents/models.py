@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, PrivateAttr
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
@@ -23,15 +23,16 @@ class Incident(BaseModel):
     severity: IncidentSeverity
     services_affected: List[str]
     symptoms: List[str]
-    root_cause: str
+    root_cause: str # We keep the field name for pydantic loading but agents MUST NOT use it directly
     contributing_factors: List[str] = Field(default_factory=list)
-    
-    # State snapshots (simulated initial data state)
-    metrics: Dict[str, Any] = Field(default_factory=dict)
-    logs: List[str] = Field(default_factory=list)
-    network_state: Dict[str, Any] = Field(default_factory=dict)
-    deployment_state: Dict[str, Any] = Field(default_factory=dict)
     
     expected_impact: str
     available_remediations: List[str]
     difficulty: int = Field(default=1, ge=1, le=7)
+    
+    _hidden_root_cause: str = PrivateAttr(default="")
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        if "root_cause" in data:
+            self._hidden_root_cause = data["root_cause"]

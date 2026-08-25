@@ -28,13 +28,13 @@ class ChaosInjector:
         
         # Force specific root causes based on exact requested chaos scenario
         if failure_type == "cpu_failure":
-            incident.root_cause = "CPU exhaustion"
+            incident._hidden_root_cause = "CPU exhaustion"
             incident.symptoms = ["High CPU utilization (>95%)"]
         elif failure_type == "network_latency":
-            incident.root_cause = "High latency"
+            incident._hidden_root_cause = "High latency"
             incident.symptoms = ["API timeouts", "Slow response times"]
         elif failure_type == "database_failure":
-            incident.root_cause = "Connection pool exhaustion"
+            incident._hidden_root_cause = "Connection pool exhaustion"
             incident.symptoms = ["API failing to connect to DB"]
             
         return incident

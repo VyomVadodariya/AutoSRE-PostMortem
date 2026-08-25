@@ -15,14 +15,14 @@ def test_remediation_engine():
     engine = RemediationEngine(registry, metrics)
     
     # Execute successful remediation
-    result = engine.execute_and_verify("terminate_process", parameters={"pid": 1234})
+    result = engine.execute_and_verify("kill_process", parameters={"pid": 1234})
     
-    assert result.action == "terminate_process"
+    assert result.action == "kill_process"
     assert result.verification_status == "SUCCESS"
     assert "cpu_usage" in result.before_state
     
     # Execute failing remediation
-    result_fail = engine.execute_and_verify("terminate_process", parameters={})
+    result_fail = engine.execute_and_verify("kill_process", parameters={})
     assert result_fail.verification_status == "FAILED"
 
 def test_what_if_engine():
@@ -33,7 +33,7 @@ def test_what_if_engine():
     what_if = WhatIfEngine(registry)
     
     # High risk action
-    outcome1 = what_if.estimate_outcome("terminate_process", {"pid": 1234})
+    outcome1 = what_if.estimate_outcome("kill_process", {"pid": 1234})
     assert outcome1.risk == RiskLevel.HIGH
     assert "Require human approval" in outcome1.recommendation
     

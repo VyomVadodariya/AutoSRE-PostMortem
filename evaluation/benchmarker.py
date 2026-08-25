@@ -17,10 +17,6 @@ class BenchmarkResult(BaseModel):
     cost_estimate_usd: float
 
 class Benchmarker:
-    """
-    Runs automated evaluations of an Orchestrator/Agent setup against a suite of chaos scenarios.
-    Outputs metrics comparable across different agent architectures.
-    """
     def __init__(self, injector: ChaosInjector, evaluator: ChaosEvaluator):
         self.injector = injector
         self.evaluator = evaluator
@@ -34,18 +30,19 @@ class Benchmarker:
             for _ in range(iterations):
                 # 1. Inject Chaos
                 incident = self.injector.inject_chaos(scenario)
+                hidden_truth = incident._hidden_root_cause
                 
                 # 2. Run Orchestrator
+                # We extract real tokens if the agent returns it. For now, 0 if not provided
                 agent_output = orchestrator.handle_incident(incident)
+                tokens = agent_output.get("tokens_used", 1250) # In real LLM integration, this is parsed from OpenAI response
                 
-                # 3. Evaluate
-                eval_result = self.evaluator.evaluate(incident.root_cause, agent_output)
+                # 3. Evaluate against hidden truth
+                eval_result = self.evaluator.evaluate(hidden_truth, agent_output)
                 results.append(eval_result)
                 
-                # Simulate token tracking (would be extracted from Orchestrator in prod)
-                tokens = 4500 # Simulated 4.5k tokens per incident loop
                 token_usage_total += tokens
-                cost_total += (tokens / 1000.0) * 0.002 # Assume $0.002 / 1K tokens
+                cost_total += (tokens / 1000.0) * 0.002
                 
         runs = len(results)
         if runs == 0:

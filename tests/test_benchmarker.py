@@ -9,7 +9,7 @@ from agents.planning.agent import PlanningAgent
 from agents.postmortem.agent import PostmortemAgent
 from agents.remediation.engine import RemediationEngine
 from tools.registry import ToolRegistry
-from tools.implementations import RestartServiceTool
+from tools.implementations import RestartServiceTool, TerminateProcessTool
 from rca.dependency_graph.graph import DependencyGraph
 from rca.engine import RCAEngine
 from environment.observability.metrics import MetricsStore
@@ -22,6 +22,7 @@ def test_benchmarker():
     
     registry = ToolRegistry()
     registry.register(RestartServiceTool())
+    registry.register(TerminateProcessTool())
     
     metrics = MetricsStore()
     graph = DependencyGraph()

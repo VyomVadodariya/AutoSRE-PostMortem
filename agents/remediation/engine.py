@@ -21,7 +21,9 @@ class RemediationEngine:
         before_state = self.metrics_store.get_all_latest()
         
         # Execute tool
-        tool_result = self.tool_registry.execute_tool(tool_name, **parameters)
+        kwargs = parameters.copy()
+        kwargs["_metrics_store"] = self.metrics_store
+        tool_result = self.tool_registry.execute_tool(tool_name, **kwargs)
         
         # In a real environment, we'd wait for the system to stabilize.
         # time.sleep(1)
@@ -29,14 +31,24 @@ class RemediationEngine:
         # Collect state after remediation
         after_state = self.metrics_store.get_all_latest()
         
-        # Compute verification status
-        if tool_result.success:
-            # We assume it helped. In later phases, the AI will evaluate before/after metrics
-            status = "SUCCESS"
-            confidence = 0.90
-        else:
+        # Compute verification status based on actual state changes
+        if not tool_result.success:
             status = "FAILED"
-            confidence = 0.95 # Highly confident that it failed
+            confidence = 0.95
+        else:
+            # Check if any anomalous metric in before_state was resolved in after_state
+            resolved = False
+            for k, v in before_state.items():
+                if v > 80.0 and after_state.get(k, 0.0) < 80.0:
+                    resolved = True
+            
+            # If we didn't have anomalous metrics, or they were resolved
+            if resolved or not any(v > 80.0 for v in before_state.values()):
+                status = "SUCCESS"
+                confidence = 0.95
+            else:
+                status = "FAILED"
+                confidence = 0.85
             
         return RemediationResult(
             action=tool_name,

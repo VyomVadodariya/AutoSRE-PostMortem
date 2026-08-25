@@ -7,7 +7,7 @@ def test_chaos_injector():
     
     incident = injector.inject_chaos("cpu_failure", difficulty=4)
     
-    assert incident.root_cause == "CPU exhaustion"
+    assert incident._hidden_root_cause == "CPU exhaustion"
     assert incident.difficulty == 4
     assert incident.incident_class.value == "INFRASTRUCTURE"
 
