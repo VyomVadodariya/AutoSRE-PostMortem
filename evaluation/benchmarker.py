@@ -33,9 +33,9 @@ class Benchmarker:
                 hidden_truth = incident._hidden_root_cause
                 
                 # 2. Run Orchestrator
-                # We extract real tokens if the agent returns it. For now, 0 if not provided
+                # We extract real tokens if the agent returns it.
                 agent_output = orchestrator.handle_incident(incident)
-                tokens = agent_output.get("tokens_used", 1250) # In real LLM integration, this is parsed from OpenAI response
+                tokens = agent_output.get("tokens_used", 0) 
                 
                 # 3. Evaluate against hidden truth
                 eval_result = self.evaluator.evaluate(hidden_truth, agent_output)

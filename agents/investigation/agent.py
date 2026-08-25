@@ -43,6 +43,28 @@ class InvestigationAgent:
                     confidence_contribution=0.8
                 ))
 
+        # Inspect Processes
+        if hasattr(self.signal_store, 'processes'):
+            for p in self.signal_store.processes:
+                if p.cpu_percent > 50.0:
+                    evidence.append(Evidence(
+                        source="processes",
+                        description=f"Process {p.name} (PID: {p.pid}) consuming {p.cpu_percent}% CPU.",
+                        timestamp=time.time(),
+                        confidence_contribution=0.95
+                    ))
+
+        # Inspect Logs
+        if hasattr(self.signal_store, 'logs'):
+            for log in self.signal_store.get_recent_logs(20):
+                if log.level in ["ERROR", "FATAL"]:
+                    evidence.append(Evidence(
+                        source="logs",
+                        description=f"[{log.service}] {log.level}: {log.message}",
+                        timestamp=log.timestamp,
+                        confidence_contribution=0.85
+                    ))
+
         if not evidence:
             evidence.append(Evidence(
                 source="symptoms",

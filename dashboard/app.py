@@ -1,6 +1,21 @@
 import streamlit as st
 import pandas as pd
-import json
+import time
+from environment.incidents.generator import IncidentGenerator
+from environment.chaos.injector import ChaosInjector
+from environment.observability.metrics import MetricsStore
+from environment.observability.signals import SignalStore
+from environment.simulation import SimulationEnvironment
+from agents.investigation.agent import InvestigationAgent
+from agents.rca.agent import RCAAgent
+from agents.planning.agent import PlanningAgent
+from agents.remediation.engine import RemediationEngine
+from agents.postmortem.agent import PostmortemAgent
+from agents.orchestrator.orchestrator import Orchestrator
+from tools.registry import ToolRegistry
+from tools.implementations import RestartServiceTool, TerminateProcessTool
+from rca.dependency_graph.graph import DependencyGraph
+from rca.engine import RCAEngine
 
 st.set_page_config(page_title="AutoSRE | Autonomous SRE", layout="wide", initial_sidebar_state="expanded")
 
@@ -11,100 +26,109 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize simulation state
+if 'env' not in st.session_state:
+    metrics = MetricsStore()
+    signals = SignalStore()
+    st.session_state.env = SimulationEnvironment(metrics, signals)
+    
+    registry = ToolRegistry()
+    registry.register(RestartServiceTool())
+    registry.register(TerminateProcessTool())
+    
+    graph = DependencyGraph()
+    graph.add_service("nginx")
+    
+    st.session_state.orchestrator = Orchestrator(
+        InvestigationAgent(signals, metrics),
+        RCAAgent(RCAEngine(graph)),
+        PlanningAgent(),
+        RemediationEngine(registry, metrics),
+        PostmortemAgent()
+    )
+    
+    st.session_state.injector = ChaosInjector(IncidentGenerator(), st.session_state.env)
+    st.session_state.active_incident = None
+    st.session_state.agent_result = None
+
 st.sidebar.title("🌌 AutoSRE Platform")
 page = st.sidebar.radio("Navigation", [
     "Overview", 
     "Active Incident", 
-    "Investigation & RCA", 
     "Incident Timeline", 
-    "Post-Mortem", 
-    "Chaos Lab", 
-    "Benchmarking"
+    "Chaos Lab"
 ])
 
-# Mocking data connections - In real deployment, these read from the Orchestrator/Memory store
+metrics_state = st.session_state.env.metrics.get_all_latest()
+
 if page == "Overview":
     st.title("System Overview & SRE Metrics")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("SLO Target", "99.95%")
-    c2.metric("Current Availability", "99.82%", "-0.13%", delta_color="inverse")
-    c3.metric("Error Budget Consumed", "74%", "+12%", delta_color="inverse")
-    c4.metric("MTTR", "41s", "-5s")
+    
+    availability = "99.99%" if metrics_state.get("cpu_usage", 0) < 50 else "99.82%"
+    delta = "-0.17%" if availability == "99.82%" else "+0.04%"
+    
+    c2.metric("Current Availability", availability, delta, delta_color="inverse")
+    c3.metric("Error Budget Consumed", "74%", "+12%" if availability == "99.82%" else "-1%", delta_color="inverse")
+    
+    if st.session_state.agent_result:
+        mttr_str = "SUCCESS" if st.session_state.agent_result.get("recovery_success") else "FAILED"
+    else:
+        mttr_str = "N/A"
+        
+    c4.metric("Last Incident Recovery", mttr_str)
+    
+    st.subheader("System Metrics")
+    st.write(metrics_state)
     
     st.subheader("Active Incidents")
-    st.info("No critical incidents currently active. System is HEALTHY.")
+    if st.session_state.active_incident:
+        st.warning(f"Active Incident: {st.session_state.active_incident.incident_id}")
+    else:
+        st.info("No critical incidents currently active. System is HEALTHY.")
 
 elif page == "Active Incident":
     st.title("Active Incident Console")
-    st.warning("Simulated Incident: INC-4815 (Database Failure)")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader("Details")
-        st.write("**Severity:** CRITICAL")
-        st.write("**Impact:** Service degradation affecting API, Nginx")
-        st.write("**Symptoms:** API Latency Spikes, HTTP 500s")
-    with c2:
-        st.subheader("Automated RCA")
-        st.success("**Root Cause:** Connection pool exhaustion in PostgreSQL")
-        st.write("**Confidence:** 92%")
-
-elif page == "Investigation & RCA":
-    st.title("Signal Investigation & Dependency Graph")
-    st.write("Visualizing correlated evidence...")
-    st.code("""
-Dependency Graph:
-Load Balancer → Nginx → API → PostgreSQL (FAILED)
-    """, language="text")
-    st.table(pd.DataFrame({
-        "Source": ["Metrics", "Logs", "Deployments"],
-        "Evidence": ["DB Connections hit 1000", "Timeout waiting for connection", "No recent deployments"],
-        "Time": ["14:02:01", "14:02:05", "N/A"]
-    }))
+    incident = st.session_state.active_incident
+    if incident:
+        st.warning(f"Simulated Incident: {incident.incident_id}")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader("Details")
+            st.write(f"**Severity:** {incident.severity.value}")
+            st.write(f"**Impact:** {incident.expected_impact}")
+            st.write(f"**Symptoms:** {', '.join(incident.symptoms)}")
+        
+        with c2:
+            st.subheader("Automated Action Plan")
+            if st.session_state.agent_result:
+                st.write("**Recovery:**", "SUCCESS" if st.session_state.agent_result["recovery_success"] else "FAILED")
+                st.code(st.session_state.agent_result.get("postmortem", "Generating..."), language="markdown")
+            else:
+                st.info("Orchestrator has not run yet.")
+    else:
+        st.info("No active incidents to display.")
 
 elif page == "Incident Timeline":
     st.title("Audit Timeline")
     st.write("Chronological events of the most recent incident:")
-    events = [
-        "14:01:00 - Anomaly Detected: Database latency Z-Score > 3.0",
-        "14:01:05 - Orchestrator triggered Investigation Agent",
-        "14:01:10 - RCA Agent deduced Connection Pool Exhaustion",
-        "14:01:12 - Planning Agent proposed: restart_service('postgresql')",
-        "14:01:15 - What-If Engine approved action (Risk: MEDIUM)",
-        "14:01:20 - Remediation Engine executed restart_service",
-        "14:01:35 - Verification Agent confirmed recovery",
-        "14:01:40 - Postmortem Generated"
-    ]
-    for e in events:
-        st.text(e)
-
-elif page == "Post-Mortem":
-    st.title("Auto-Generated Post-Mortem")
-    st.markdown("""
-# INCIDENT POSTMORTEM: INC-4815
-**Severity**: CRITICAL
-**MTTR**: 40s
-**Estimated Business Impact**: $1,450
-
-## Root Cause
-PostgreSQL connection pool exhaustion due to aggressive unoptimized queries.
-
-## Lessons Learned
-- Ensure database query timeouts are strictly enforced.
-    """)
+    if st.session_state.agent_result:
+        events = st.session_state.agent_result.get("timeline", [])
+        for e in events:
+            st.text(e)
+    else:
+        st.info("No timeline data available.")
 
 elif page == "Chaos Lab":
     st.title("Chaos Engineering Lab")
     st.write("Inject failures to test the agent.")
-    scenario = st.selectbox("Scenario", ["CPU Exhaustion", "Network Latency", "Database Failure", "Cascading Failure"])
+    scenario = st.selectbox("Scenario", ["cpu_failure", "network_latency", "database_failure"])
+    
     if st.button("Inject Chaos"):
-        st.error(f"Injected: {scenario}. Agent will respond immediately.")
-
-elif page == "Benchmarking":
-    st.title("Agent Benchmarking")
-    st.code("""
-Agent            RCA     MTTR    Actions    Safety    Cost
-------------------------------------------------------------
-AutoSRE_v2       92%     41s     3.2        99%       $0.0090
-Baseline_v1      74%     69s     8.4        91%       $0.0150
-    """, language="text")
+        st.error(f"Injected: {scenario}. Agent responding...")
+        st.session_state.active_incident = st.session_state.injector.inject_chaos(scenario)
+        # Update metrics visually before agent responds? In streamlit we can just run it
+        
+        st.session_state.agent_result = st.session_state.orchestrator.handle_incident(st.session_state.active_incident)
+        st.success("Orchestrator loop complete! Check Active Incident tab.")

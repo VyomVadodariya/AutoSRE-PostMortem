@@ -17,7 +17,8 @@ class Orchestrator:
         
     def handle_incident(self, incident: Incident) -> Dict[str, Any]:
         timestamps = {}
-        timestamps["start_time"] = time.time() - 2 # Mocking it started 2 secs ago
+        # Use actual incident injection time
+        timestamps["start_time"] = incident.timestamp.timestamp()
         
         self.timeline.append(f"Incident {incident.incident_id} detected.")
         timestamps["detected_time"] = time.time()

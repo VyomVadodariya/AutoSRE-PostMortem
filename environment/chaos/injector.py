@@ -1,13 +1,17 @@
+import time
 from environment.incidents.generator import IncidentGenerator
 from environment.incidents.models import Incident
+from environment.simulation import SimulationEnvironment
+from environment.observability.signals import LogEntry
 from typing import Optional
 
 class ChaosInjector:
     """
     Injects intentional failures into the environment for chaos engineering testing.
     """
-    def __init__(self, incident_generator: IncidentGenerator):
+    def __init__(self, incident_generator: IncidentGenerator, env: SimulationEnvironment = None):
         self.generator = incident_generator
+        self.env = env
         
     def inject_chaos(self, failure_type: str, difficulty: int = 3) -> Incident:
         mapping = {
@@ -30,11 +34,19 @@ class ChaosInjector:
         if failure_type == "cpu_failure":
             incident._hidden_root_cause = "CPU exhaustion"
             incident.symptoms = ["High CPU utilization (>95%)"]
+            if self.env:
+                self.env.inject_process(pid=8472, name="xmrig", cpu=82.0, memory=10.0)
         elif failure_type == "network_latency":
             incident._hidden_root_cause = "High latency"
             incident.symptoms = ["API timeouts", "Slow response times"]
+            if self.env:
+                self.env.metrics.record("api_latency", 2500.0)
+                self.env.signals.add_log(LogEntry(timestamp=time.time(), service="nginx", level="WARN", message="Upstream timed out"))
         elif failure_type == "database_failure":
             incident._hidden_root_cause = "Connection pool exhaustion"
             incident.symptoms = ["API failing to connect to DB"]
+            if self.env:
+                self.env.metrics.record("db_connections", 1000.0)
+                self.env.signals.add_log(LogEntry(timestamp=time.time(), service="postgresql", level="FATAL", message="sorry, too many clients already"))
             
         return incident

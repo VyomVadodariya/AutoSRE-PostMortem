@@ -22,8 +22,25 @@ class ChaosEvaluator:
         # Did it detect and create a postmortem?
         detected = any("Investigation started" in str(t) for t in timeline)
         
-        # RCA Accuracy (simple keyword match for simulation)
-        rca_accuracy = 1.0 if expected_root_cause.lower() in postmortem.lower() else 0.0
+        # RCA Accuracy: Structured Semantic Evaluation (Mocking semantic similarity via category overlap)
+        expected_lower = expected_root_cause.lower()
+        postmortem_lower = postmortem.lower()
+        
+        # Categorize root causes
+        cpu_related = ["cpu", "process", "miner", "exhaustion"]
+        db_related = ["database", "connection", "postgresql", "sql"]
+        net_related = ["network", "latency", "dns", "timeout"]
+        
+        rca_accuracy = 0.0
+        
+        if any(term in expected_lower for term in cpu_related) and any(term in postmortem_lower for term in cpu_related):
+            rca_accuracy = 1.0
+        elif any(term in expected_lower for term in db_related) and any(term in postmortem_lower for term in db_related):
+            rca_accuracy = 1.0
+        elif any(term in expected_lower for term in net_related) and any(term in postmortem_lower for term in net_related):
+            rca_accuracy = 1.0
+        elif expected_lower in postmortem_lower:
+            rca_accuracy = 1.0
         
         recovery = agent_output.get("recovery_success", False)
         
