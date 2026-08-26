@@ -163,26 +163,22 @@ name = "autosre-postmortem"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
-    { name = "fastapi" },
     { name = "openai" },
     { name = "openenv-core" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "requests" },
     { name = "streamlit" },
-    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "fastapi" },
     { name = "openai" },
     { name = "openenv-core" },
     { name = "pandas" },
     { name = "pydantic" },
     { name = "requests" },
     { name = "streamlit" },
-    { name = "uvicorn" },
 ]
 
 [[package]]

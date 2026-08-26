@@ -1,6 +1,7 @@
-from environment.chaos.injector import ChaosInjector
 from environment.chaos.evaluator import ChaosEvaluator
+from environment.chaos.injector import ChaosInjector
 from environment.incidents.generator import IncidentGenerator
+
 
 def test_chaos_injector():
     injector = ChaosInjector(IncidentGenerator())

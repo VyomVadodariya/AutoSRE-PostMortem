@@ -1,15 +1,17 @@
-from typing import List, Dict, Any, Optional
+from __future__ import annotations
+
 from environment.incidents.models import Incident
-from rca.correlation.evidence import Evidence
-from rca.engine import RCAEngine, RCA_Result
 from memory.incidents.store import IncidentMemoryStore
+from rca.correlation.evidence import Evidence
+from rca.engine import RCA_Result, RCAEngine
+
 
 class RCAAgent:
-    def __init__(self, rca_engine: RCAEngine, memory_store: Optional[IncidentMemoryStore] = None):
+    def __init__(self, rca_engine: RCAEngine, memory_store: IncidentMemoryStore | None = None):
         self.engine = rca_engine
         self.memory_store = memory_store
 
-    def analyze(self, incident: Incident, evidence: List[Evidence]) -> RCA_Result:
+    def analyze(self, incident: Incident, evidence: list[Evidence]) -> RCA_Result:
         evidence_text = " ".join([e.description.lower() for e in evidence])
         
         has_db_timeout = "connection" in evidence_text or "pool exhausted" in evidence_text or "too many clients" in evidence_text

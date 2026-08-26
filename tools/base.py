@@ -1,18 +1,23 @@
-from typing import Dict, Any, Optional, List
+from __future__ import annotations
+
+from typing import Any
+
 from pydantic import BaseModel
+
 from policies.risk.levels import RiskLevel
+
 
 class ToolResult(BaseModel):
     success: bool
     output: str
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
 
 class BaseTool:
     name: str = ""
     description: str = ""
-    parameters: Dict[str, Any] = {}
+    parameters: dict[str, Any] = {}
     risk_level: RiskLevel = RiskLevel.LOW
-    permissions: List[str] = []
+    permissions: list[str] = []
 
     def validate(self, **kwargs) -> bool:
         """Validate input parameters."""

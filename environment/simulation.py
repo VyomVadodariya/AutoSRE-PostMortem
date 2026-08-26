@@ -1,8 +1,9 @@
 import time
-from typing import Dict, List, Optional
+
 from environment.observability.metrics import MetricsStore
-from environment.observability.signals import SignalStore, ProcessInfo, LogEntry
+from environment.observability.signals import LogEntry, ProcessInfo, SignalStore
 from environment.state import DatabaseState, ServiceState
+
 
 class SimulationEnvironment:
     """
@@ -14,7 +15,7 @@ class SimulationEnvironment:
         self.signals = signal_store
         
         self.db_state = DatabaseState()
-        self.services: Dict[str, ServiceState] = {}
+        self.services: dict[str, ServiceState] = {}
         
         self.total_requests = 10000
         self.failed_requests = 0
@@ -44,7 +45,7 @@ class SimulationEnvironment:
             self.db_state.query_latency = 10.0
             
         # Dependencies cascade
-        for svc_name, svc in self.services.items():
+        for svc in self.services.values():
             if "postgresql" in svc.dependencies:
                 svc.health = self.db_state.health
             elif "api_server" in svc.dependencies:

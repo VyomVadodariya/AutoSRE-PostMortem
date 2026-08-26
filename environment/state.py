@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, Field
-from typing import List, Dict
+
 
 class DatabaseState(BaseModel):
     status: str = "healthy"
@@ -15,5 +16,5 @@ class ServiceState(BaseModel):
     version: str = "1.0.0"
     restart_count: int = 0
     health: float = 1.0
-    dependencies: List[str] = Field(default_factory=list)
-    resource_usage: Dict[str, float] = Field(default_factory=dict)
+    dependencies: list[str] = Field(default_factory=list)
+    resource_usage: dict[str, float] = Field(default_factory=dict)

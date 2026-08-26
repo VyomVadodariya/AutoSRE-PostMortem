@@ -1,8 +1,11 @@
-import uuid
+from __future__ import annotations
+
 import random
+import uuid
 from datetime import datetime, timezone
-from typing import Optional, List
+
 from environment.incidents.models import Incident, IncidentClass, IncidentSeverity
+
 
 class IncidentGenerator:
     def __init__(self):
@@ -11,7 +14,7 @@ class IncidentGenerator:
     def _generate_id(self) -> str:
         return f"INC-{uuid.uuid4().hex[:8].upper()}"
 
-    def generate_incident(self, category: Optional[str] = None, difficulty: Optional[int] = None) -> Incident:
+    def generate_incident(self, category: str | None = None, difficulty: int | None = None) -> Incident:
         categories = ["infrastructure", "network", "application", "database", "security", "multi_failure", "cascading"]
         if not category:
             category = random.choice(categories)

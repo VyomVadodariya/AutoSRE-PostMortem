@@ -1,9 +1,11 @@
+import time
+from datetime import datetime, timezone
+
 from agents.postmortem.agent import PostmortemAgent
+from agents.remediation.engine import RemediationResult
 from environment.incidents.models import Incident, IncidentClass, IncidentSeverity
 from rca.engine import RCA_Result
-from agents.remediation.engine import RemediationResult
-from datetime import datetime, timezone
-import time
+
 
 def test_postmortem_generation():
     agent = PostmortemAgent()

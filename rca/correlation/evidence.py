@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
+
 
 class Evidence(BaseModel):
     source: str  # e.g., "metrics", "logs", "deployment", "process"
@@ -9,7 +11,7 @@ class Evidence(BaseModel):
 
 class CorrelatedFinding(BaseModel):
     title: str
-    evidence_list: List[Evidence] = Field(default_factory=list)
+    evidence_list: list[Evidence] = Field(default_factory=list)
     confidence: float
     deduced_cause: str
     
@@ -29,10 +31,10 @@ class CorrelationEngine:
     and helps pre-correlate them into findings for the AI agent to evaluate.
     """
     def __init__(self):
-        self.findings: List[CorrelatedFinding] = []
+        self.findings: list[CorrelatedFinding] = []
         
     def correlate_deployment_and_metric(self, deployment_time: float, metric_time: float, 
-                                        deployment_desc: str, metric_desc: str) -> Optional[CorrelatedFinding]:
+                                        deployment_desc: str, metric_desc: str) -> CorrelatedFinding | None:
         """
         If a metric spike happens shortly after a deployment, correlate them.
         """

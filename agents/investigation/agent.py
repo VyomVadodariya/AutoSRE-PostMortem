@@ -1,14 +1,15 @@
-from typing import List
+import time
+
 from environment.incidents.models import Incident
 from rca.correlation.evidence import Evidence
-import time
+
 
 class InvestigationAgent:
     def __init__(self, signal_store, metrics_store):
         self.signal_store = signal_store
         self.metrics_store = metrics_store
 
-    def investigate(self, incident: Incident) -> List[Evidence]:
+    def investigate(self, incident: Incident) -> list[Evidence]:
         evidence = []
         budget = 8
         self.timeline = []
@@ -16,8 +17,8 @@ class InvestigationAgent:
         self.timeline.append(f"[Thought]: Starting investigation. Initial symptoms: {', '.join(incident.symptoms)}")
         
         # Step 1: Check metrics
-        self.timeline.append(f"[Thought]: I need to check the current system metrics to confirm the symptoms.")
-        self.timeline.append(f"[Action]: get_metric_history()")
+        self.timeline.append("[Thought]: I need to check the current system metrics to confirm the symptoms.")
+        self.timeline.append("[Action]: get_metric_history()")
         budget -= 1
         
         metrics_anomalies = []
@@ -37,8 +38,8 @@ class InvestigationAgent:
 
         # Step 2: Branch based on metrics
         if ("CPU" in metrics_anomalies or "Latency" in metrics_anomalies) and budget > 0:
-            self.timeline.append(f"[Thought]: I should list active processes to see if a specific process is consuming resources.")
-            self.timeline.append(f"[Action]: list_processes()")
+            self.timeline.append("[Thought]: I should list active processes to see if a specific process is consuming resources.")
+            self.timeline.append("[Action]: list_processes()")
             budget -= 1
             if hasattr(self.signal_store, 'processes'):
                 for p in self.signal_store.processes:
@@ -47,8 +48,8 @@ class InvestigationAgent:
                         self.timeline.append(f"[Observation]: Process {p.name} (PID {p.pid}) is using {p.cpu_percent}% CPU.")
         
         if ("Database" in metrics_anomalies or "Latency" in metrics_anomalies) and budget > 0:
-            self.timeline.append(f"[Thought]: I should check the logs to see if there are backend connection failures.")
-            self.timeline.append(f"[Action]: inspect_logs('all')")
+            self.timeline.append("[Thought]: I should check the logs to see if there are backend connection failures.")
+            self.timeline.append("[Action]: inspect_logs('all')")
             budget -= 1
             if hasattr(self.signal_store, 'logs'):
                 for log in self.signal_store.get_recent_logs(20):
@@ -58,10 +59,10 @@ class InvestigationAgent:
         
         # Checking Deployments
         if budget > 0:
-            self.timeline.append(f"[Thought]: Checking recent deployments to rule out bad releases.")
-            self.timeline.append(f"[Action]: get_deployments()")
+            self.timeline.append("[Thought]: Checking recent deployments to rule out bad releases.")
+            self.timeline.append("[Action]: get_deployments()")
             budget -= 1
-            self.timeline.append(f"[Observation]: No anomalous deployments in the last hour.")
+            self.timeline.append("[Observation]: No anomalous deployments in the last hour.")
 
         if not evidence:
             evidence.append(Evidence(
@@ -71,5 +72,5 @@ class InvestigationAgent:
                 confidence_contribution=0.5
             ))
             
-        self.timeline.append(f"[Thought]: I have exhausted my tool budget or found enough evidence to proceed to RCA.")
+        self.timeline.append("[Thought]: I have exhausted my tool budget or found enough evidence to proceed to RCA.")
         return evidence

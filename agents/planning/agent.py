@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import re
-from typing import Optional
+
 from agents.orchestrator.orchestrator import ActionPlan
-from rca.engine import RCA_Result
 from agents.remediation.what_if import WhatIfEngine
+from rca.engine import RCA_Result
+
 
 class PlanningAgent:
-    def __init__(self, whatif_engine: Optional[WhatIfEngine] = None):
+    def __init__(self, whatif_engine: WhatIfEngine | None = None):
         self.whatif_engine = whatif_engine
         
     def create_plan(self, rca_result: RCA_Result) -> ActionPlan:
@@ -14,7 +17,7 @@ class PlanningAgent:
         
         self.timeline = []
         self.timeline.append(f"[Thought]: Analyzing root cause: {rca_result.root_cause}")
-        self.timeline.append(f"[Thought]: Generating candidate actions based on RCA.")
+        self.timeline.append("[Thought]: Generating candidate actions based on RCA.")
         
         # Candidate generation
         candidates = []
@@ -73,5 +76,5 @@ class PlanningAgent:
             return ActionPlan(actions=[best_action])
             
         # Fallback if no engine or no good candidates
-        self.timeline.append(f"[Decision]: Defaulting to safe restart of api_server due to lack of confident candidates.")
+        self.timeline.append("[Decision]: Defaulting to safe restart of api_server due to lack of confident candidates.")
         return ActionPlan(actions=[{"tool_name": "restart_service", "parameters": {"service_name": "api_server"}}])

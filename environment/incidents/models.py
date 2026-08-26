@@ -1,7 +1,8 @@
-from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Dict, Any, Optional
 from datetime import datetime
 from enum import Enum
+
+from pydantic import BaseModel, Field, PrivateAttr
+
 
 class IncidentSeverity(str, Enum):
     LOW = "LOW"
@@ -21,13 +22,13 @@ class Incident(BaseModel):
     timestamp: datetime
     incident_class: IncidentClass
     severity: IncidentSeverity
-    services_affected: List[str]
-    symptoms: List[str]
+    services_affected: list[str]
+    symptoms: list[str]
     root_cause: str # We keep the field name for pydantic loading but agents MUST NOT use it directly
-    contributing_factors: List[str] = Field(default_factory=list)
+    contributing_factors: list[str] = Field(default_factory=list)
     
     expected_impact: str
-    available_remediations: List[str]
+    available_remediations: list[str]
     difficulty: int = Field(default=1, ge=1, le=7)
     
     _hidden_root_cause: str = PrivateAttr(default="")

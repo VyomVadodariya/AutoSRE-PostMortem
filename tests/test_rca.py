@@ -1,9 +1,11 @@
 import time
-from rca.dependency_graph.graph import DependencyGraph
-from rca.engine import RCAEngine
+from datetime import datetime, timezone
+
 from environment.incidents.models import Incident, IncidentClass, IncidentSeverity
 from rca.correlation.evidence import Evidence
-from datetime import datetime, timezone
+from rca.dependency_graph.graph import DependencyGraph
+from rca.engine import RCAEngine
+
 
 def test_dependency_graph():
     graph = DependencyGraph()

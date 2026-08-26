@@ -1,6 +1,7 @@
 from memory.incidents.store import IncidentMemoryStore, IncidentRecord
 from memory.vector_store.lightweight import LightweightVectorStore
 
+
 def test_vector_store():
     store = LightweightVectorStore()
     

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class BusinessImpact(BaseModel):
     impact_per_minute: float
     incident_duration_seconds: float

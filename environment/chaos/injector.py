@@ -1,9 +1,10 @@
 import time
+
 from environment.incidents.generator import IncidentGenerator
 from environment.incidents.models import Incident
-from environment.simulation import SimulationEnvironment
 from environment.observability.signals import LogEntry
-from typing import Optional
+from environment.simulation import SimulationEnvironment
+
 
 class ChaosInjector:
     """

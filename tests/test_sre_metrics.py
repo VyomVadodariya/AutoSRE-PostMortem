@@ -1,5 +1,6 @@
-from environment.observability.sre_metrics import SREMetricsTracker
 from environment.observability.business_impact import BusinessImpactCalculator
+from environment.observability.sre_metrics import SREMetricsTracker
+
 
 def test_sre_metrics():
     tracker = SREMetricsTracker(slo_target=99.95)

@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, Field
-from typing import List, Optional
+
 
 class LogEntry(BaseModel):
     timestamp: float
@@ -34,10 +35,10 @@ class SignalStore(BaseModel):
     """
     Simulated storage for various non-metric observability signals.
     """
-    logs: List[LogEntry] = Field(default_factory=list)
-    processes: List[ProcessInfo] = Field(default_factory=list)
-    network_events: List[NetworkEvent] = Field(default_factory=list)
-    deployments: List[DeploymentEvent] = Field(default_factory=list)
+    logs: list[LogEntry] = Field(default_factory=list)
+    processes: list[ProcessInfo] = Field(default_factory=list)
+    network_events: list[NetworkEvent] = Field(default_factory=list)
+    deployments: list[DeploymentEvent] = Field(default_factory=list)
     
     def add_log(self, log: LogEntry):
         self.logs.append(log)
@@ -51,8 +52,8 @@ class SignalStore(BaseModel):
     def add_deployment(self, event: DeploymentEvent):
         self.deployments.append(event)
         
-    def get_recent_logs(self, limit: int = 50) -> List[LogEntry]:
+    def get_recent_logs(self, limit: int = 50) -> list[LogEntry]:
         return self.logs[-limit:]
         
-    def get_recent_deployments(self, limit: int = 5) -> List[DeploymentEvent]:
+    def get_recent_deployments(self, limit: int = 5) -> list[DeploymentEvent]:
         return self.deployments[-limit:]

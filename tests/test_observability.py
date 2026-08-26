@@ -1,6 +1,6 @@
-import time
-from environment.observability.metrics import MetricsStore, TimeSeriesMetric
 from environment.observability.anomaly_detector import AnomalyDetector, AnomalyEvent
+from environment.observability.metrics import MetricsStore, TimeSeriesMetric
+
 
 def test_metrics_store():
     store = MetricsStore()

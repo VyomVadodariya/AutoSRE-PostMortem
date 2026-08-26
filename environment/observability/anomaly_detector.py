@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import math
-from typing import List, Optional, Dict, Any
+
 from pydantic import BaseModel
+
 from environment.observability.metrics import TimeSeriesMetric
+
 
 class AnomalyEvent(BaseModel):
     metric: str
@@ -15,9 +19,9 @@ class AnomalyDetector:
     def __init__(self, z_score_threshold: float = 3.0, ewma_alpha: float = 0.2):
         self.z_score_threshold = z_score_threshold
         self.ewma_alpha = ewma_alpha
-        self.ewma_state: Dict[str, float] = {}
+        self.ewma_state: dict[str, float] = {}
 
-    def detect(self, metric: TimeSeriesMetric) -> Optional[AnomalyEvent]:
+    def detect(self, metric: TimeSeriesMetric) -> AnomalyEvent | None:
         points = metric.points
         if len(points) < 5:
             # Not enough data to establish a baseline
@@ -42,7 +46,7 @@ class AnomalyDetector:
         current_ewma = (self.ewma_alpha * latest.value) + ((1 - self.ewma_alpha) * prev_ewma)
         self.ewma_state[metric.name] = current_ewma
         
-        ewma_deviation = abs(latest.value - current_ewma)
+        abs(latest.value - current_ewma)
 
         # Decide if anomalous (using Z-score primarily)
         if z_score > self.z_score_threshold:

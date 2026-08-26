@@ -1,17 +1,20 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
-from typing import List, Optional
-from rca.correlation.evidence import Evidence
+
 from environment.incidents.models import Incident
+from rca.correlation.evidence import Evidence
 from rca.dependency_graph.graph import DependencyGraph
 
+
 class RCA_Result(BaseModel):
-    symptoms: List[str]
+    symptoms: list[str]
     root_cause: str
-    contributing_factors: List[str]
+    contributing_factors: list[str]
     impact: str
-    evidence: List[Evidence]
+    evidence: list[Evidence]
     confidence: float
-    causal_chain: List[str] = []
+    causal_chain: list[str] = []
 
 class RCAEngine:
     """
@@ -21,7 +24,7 @@ class RCAEngine:
     def __init__(self, dependency_graph: DependencyGraph):
         self.dependency_graph = dependency_graph
         
-    def generate_rca(self, incident: Incident, evidence_collected: List[Evidence], deduced_cause: str, causal_chain: List[str] = None) -> RCA_Result:
+    def generate_rca(self, incident: Incident, evidence_collected: list[Evidence], deduced_cause: str, causal_chain: list[str] | None = None) -> RCA_Result:
         # Calculate impact based on the dependency graph
         all_affected = set(incident.services_affected)
         for s in incident.services_affected:

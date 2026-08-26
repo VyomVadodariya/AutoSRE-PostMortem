@@ -1,7 +1,6 @@
-from typing import Dict, Any
-from tools.base import BaseTool, ToolResult
 from policies.risk.levels import RiskLevel
-import time
+from tools.base import BaseTool, ToolResult
+
 
 class GetMetricsTool(BaseTool):
     name = "get_metrics"

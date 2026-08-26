@@ -1,12 +1,13 @@
-import pytest
-from datetime import datetime
-from environment.incidents.models import Incident, IncidentClass, IncidentSeverity
+from datetime import datetime, timezone
+
 from environment.incidents.generator import IncidentGenerator
+from environment.incidents.models import Incident, IncidentClass, IncidentSeverity
+
 
 def test_incident_model_creation():
     incident = Incident(
         incident_id="INC-123",
-        timestamp=datetime.now(),
+        timestamp=datetime.now(timezone.utc),
         incident_class=IncidentClass.INFRASTRUCTURE,
         severity=IncidentSeverity.HIGH,
         services_affected=["nginx"],

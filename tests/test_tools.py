@@ -1,6 +1,11 @@
-from tools.registry import ToolRegistry
-from tools.implementations import GetMetricsTool, RestartServiceTool, TerminateProcessTool
 from policies.risk.levels import RiskLevel
+from tools.implementations import (
+    GetMetricsTool,
+    RestartServiceTool,
+    TerminateProcessTool,
+)
+from tools.registry import ToolRegistry
+
 
 def test_tool_registration():
     registry = ToolRegistry()
@@ -15,8 +20,8 @@ def test_tool_registration():
     assert tool_missing is None
 
 def test_tool_validation():
-    from environment.observability.signals import SignalStore
     from environment.observability.metrics import MetricsStore
+    from environment.observability.signals import SignalStore
     from environment.simulation import SimulationEnvironment
     env = SimulationEnvironment(MetricsStore(), SignalStore())
     env.inject_process(pid=1234, name="test", cpu=10.0, memory=10.0)

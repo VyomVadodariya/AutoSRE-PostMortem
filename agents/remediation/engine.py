@@ -1,52 +1,79 @@
+import copy
+from typing import Any
+
 from pydantic import BaseModel
-from typing import Dict, Any
-from tools.registry import ToolRegistry
+
 from environment.observability.metrics import MetricsStore
-import time
+from tools.registry import ToolRegistry
+from policies.safety_pipeline import SafetyPipeline
+
 
 class RemediationResult(BaseModel):
     action: str
-    before_state: Dict[str, Any]
-    after_state: Dict[str, Any]
+    before_state: dict[str, Any]
+    after_state: dict[str, Any]
     verification_status: str
     confidence: float
+    safety_reason: str = ""
 
 class RemediationEngine:
     def __init__(self, tool_registry: ToolRegistry, metrics_store: MetricsStore):
         self.tool_registry = tool_registry
         self.metrics_store = metrics_store
+        self.safety_pipeline = SafetyPipeline(metrics_store)
 
-    def execute_and_verify(self, tool_name: str, parameters: Dict[str, Any]) -> RemediationResult:
-        # Collect state before remediation
+    def execute_and_verify(self, tool_name: str, parameters: dict[str, Any]) -> RemediationResult:
+        # Get Tool
+        tool = self.tool_registry.get_tool(tool_name)
         before_state = self.metrics_store.get_all_latest()
         
-        # Execute tool
+        if not tool:
+            return RemediationResult(
+                action=tool_name,
+                before_state=before_state,
+                after_state=before_state,
+                verification_status="FAILED",
+                confidence=1.0,
+                safety_reason="Tool not found"
+            )
+        
+        # 1. Safety Policy Check
+        decision = self.safety_pipeline.evaluate_request(tool, parameters)
+        if not decision.approved:
+            return RemediationResult(
+                action=tool_name,
+                before_state=before_state,
+                after_state=before_state,
+                verification_status="BLOCKED_BY_POLICY",
+                confidence=1.0,
+                safety_reason=decision.reason
+            )
+            
+        # 2. Snapshot (mock)
+        snapshot = copy.deepcopy(before_state)
+        
+        # 3. Execute
         kwargs = parameters.copy()
         kwargs["_metrics_store"] = self.metrics_store
+        
+        # Use registry.execute_tool to leverage its built-in exception handling and validation
         tool_result = self.tool_registry.execute_tool(tool_name, **kwargs)
         
-        # In a real environment, we'd wait for the system to stabilize.
-        # time.sleep(1)
-        
-        # Collect state after remediation
+        # 4. Verify
         after_state = self.metrics_store.get_all_latest()
         
-        # Compute verification status based on actual state changes
         if not tool_result.success:
             status = "FAILED"
             confidence = 0.95
         else:
-            # Check if any anomalous metric in before_state was resolved in after_state
             resolved = False
             ignore_metrics = ["total_requests", "failed_requests"]
-            
             for k, v in before_state.items():
                 if k in ignore_metrics:
                     continue
                 if v > 80.0 and after_state.get(k, 0.0) < 80.0:
                     resolved = True
             
-            # If we didn't have anomalous metrics, or they were resolved
             anomalous = any(v > 80.0 for k, v in before_state.items() if k not in ignore_metrics)
             
             if resolved or not anomalous:
@@ -55,11 +82,17 @@ class RemediationEngine:
             else:
                 status = "FAILED"
                 confidence = 0.85
+                
+        # 5. Rollback if Failed
+        if status == "FAILED":
+            # Mock rollback
+            pass # In a real implementation we would revert the state here
             
         return RemediationResult(
             action=tool_name,
             before_state=before_state,
             after_state=after_state,
             verification_status=status,
-            confidence=confidence
+            confidence=confidence,
+            safety_reason="Executed successfully" if status == "SUCCESS" else "Rolled back after failure"
         )

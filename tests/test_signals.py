@@ -1,6 +1,8 @@
 import time
-from environment.observability.signals import SignalStore, LogEntry, DeploymentEvent
-from rca.correlation.evidence import CorrelationEngine, Evidence
+
+from environment.observability.signals import LogEntry, SignalStore
+from rca.correlation.evidence import CorrelationEngine
+
 
 def test_signal_store():
     store = SignalStore()

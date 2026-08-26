@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import os
-from typing import List
+
 
 class EmbeddingProvider:
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         raise NotImplementedError
 
-import re
 import math
-from collections import defaultdict
+import re
+
 
 class HashingEmbeddingProvider(EmbeddingProvider):
     """
@@ -17,7 +19,7 @@ class HashingEmbeddingProvider(EmbeddingProvider):
     def __init__(self, dimensions: int = 256):
         self.dimensions = dimensions
 
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         # Tokenize and normalize
         words = re.findall(r'\b\w+\b', text.lower())
         
@@ -36,14 +38,14 @@ class HashingEmbeddingProvider(EmbeddingProvider):
         return vector
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY is required for OpenAIEmbeddingProvider")
         import openai
         self.client = openai.OpenAI(api_key=self.api_key)
         
-    def embed(self, text: str) -> List[float]:
+    def embed(self, text: str) -> list[float]:
         response = self.client.embeddings.create(
             model="text-embedding-3-small",
             input=text

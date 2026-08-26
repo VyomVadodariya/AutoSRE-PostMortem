@@ -5,15 +5,25 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "autosre-postmortem"
 version = "1.0.0"
+description = "Autonomous SRE Incident Response Benchmark & Simulation Platform"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [{name = "AutoSRE Team"}]
 dependencies = [
     "openenv-core",
     "pydantic",
     "requests",
-    "fastapi",
-    "uvicorn",
     "openai",
     "streamlit",
-    "pandas"
+    "pandas",
+    "pytest",
+    "networkx"
 ]
-[project.scripts]
-server = "server.app:main"
+
+[tool.setuptools.packages.find]
+include = ["agents*", "environment*", "evaluation*", "policies*", "tools*", "memory*", "rca*", "dashboard*", "adapters*"]
+exclude = ["results*", "tests*"]
+
+[tool.ruff]
+lint.ignore = ["RUF012"]

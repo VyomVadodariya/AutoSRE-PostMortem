@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel
-from typing import List
+
 
 class SREMetricsStatus(BaseModel):
     slo_target: float
@@ -30,10 +31,10 @@ class SREMetricsTracker:
         self.total_downtime_minutes = 12.0
         
         # Historical metric lists (in seconds)
-        self.mttd_list: List[float] = [120, 300]
-        self.mtta_list: List[float] = [30, 45]
-        self.mttr_list: List[float] = [600, 1200]
-        self.mtbf_list: List[float] = [864000, 1200000]
+        self.mttd_list: list[float] = [120, 300]
+        self.mtta_list: list[float] = [30, 45]
+        self.mttr_list: list[float] = [600, 1200]
+        self.mtbf_list: list[float] = [864000, 1200000]
 
     def record_incident_metrics(self, mttd: float, mtta: float, mttr: float, downtime_minutes: float):
         self.mttd_list.append(mttd)

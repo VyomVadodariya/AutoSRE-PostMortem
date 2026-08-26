@@ -1,0 +1,43 @@
+name: AutoSRE CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install ruff pytest build
+        
+    - name: Lint with Ruff
+      run: |
+        ruff check .
+        
+    - name: Run Pytest
+      run: |
+        pytest
+        
+    - name: Benchmark Smoke Test
+      run: |
+        python run_benchmark.py --episodes 4 --seed 42 --out-dir results
+        
+    - name: Validate Package Build
+      run: |
+        python -m build

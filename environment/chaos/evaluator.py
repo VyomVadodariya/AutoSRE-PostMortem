@@ -1,5 +1,7 @@
-from typing import Dict, Any
+from typing import Any
+
 from pydantic import BaseModel
+
 
 class ChaosEvaluationResult(BaseModel):
     detected: bool
@@ -15,7 +17,7 @@ class ChaosEvaluator:
     """
     Evaluates the performance of the AI Agent against an injected chaos scenario.
     """
-    def evaluate(self, expected_root_cause: str, agent_output: Dict[str, Any]) -> ChaosEvaluationResult:
+    def evaluate(self, expected_root_cause: str, agent_output: dict[str, Any]) -> ChaosEvaluationResult:
         postmortem = agent_output.get("postmortem", "")
         timeline = agent_output.get("timeline", [])
         timestamps = agent_output.get("timestamps", {})
@@ -34,19 +36,13 @@ class ChaosEvaluator:
         
         rca_accuracy = 0.0
         
-        if any(term in expected_lower for term in cpu_related) and any(term in postmortem_lower for term in cpu_related):
-            rca_accuracy = 1.0
-        elif any(term in expected_lower for term in db_related) and any(term in postmortem_lower for term in db_related):
-            rca_accuracy = 1.0
-        elif any(term in expected_lower for term in net_related) and any(term in postmortem_lower for term in net_related):
-            rca_accuracy = 1.0
-        elif expected_lower in postmortem_lower:
+        if any(term in expected_lower for term in cpu_related) and any(term in postmortem_lower for term in cpu_related) or any(term in expected_lower for term in db_related) and any(term in postmortem_lower for term in db_related) or any(term in expected_lower for term in net_related) and any(term in postmortem_lower for term in net_related) or expected_lower in postmortem_lower:
             rca_accuracy = 1.0
         
         recovery = agent_output.get("recovery_success", False)
         
         mttr = 0.0
-        if recovery and "recovered_time" in timestamps and "start_time" in timestamps:
+        if recovery and timestamps.get("recovered_time") and timestamps.get("start_time"):
             mttr = float(timestamps["recovered_time"] - timestamps["start_time"])
         
         # Mocking actions tracking

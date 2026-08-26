@@ -1,12 +1,20 @@
-from typing import List, Dict, Any, Optional
-from environment.incidents.models import Incident
-from pydantic import BaseModel
 import time
+from typing import Any
+
+from pydantic import BaseModel
+
+from environment.incidents.models import Incident
+from agents.base import BaseAgent
+
 
 class ActionPlan(BaseModel):
-    actions: List[Dict[str, Any]]
+    actions: list[dict[str, Any]]
 
-class Orchestrator:
+class Orchestrator(BaseAgent):
+    @property
+    def name(self) -> str:
+        return "AutoSRE_v3"
+
     def __init__(self, investigation_agent, rca_agent, planning_agent, remediation_engine, postmortem_agent, memory_store=None):
         self.investigation_agent = investigation_agent
         self.rca_agent = rca_agent
@@ -14,9 +22,9 @@ class Orchestrator:
         self.remediation_engine = remediation_engine
         self.postmortem_agent = postmortem_agent
         self.memory_store = memory_store
-        self.timeline: List[str] = []
+        self.timeline: list[str] = []
         
-    def handle_incident(self, incident: Incident) -> Dict[str, Any]:
+    def handle_incident(self, incident: Incident) -> dict[str, Any]:
         timestamps = {}
         # Use actual incident injection time
         timestamps["incident_created"] = incident.timestamp.timestamp()
