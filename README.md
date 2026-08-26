@@ -7,7 +7,7 @@ Testing autonomous AI agents in live production environments is prohibitively da
 
 ## 🎥 Demo
 
-![Dashboard Screenshot](/assets/dashboard_preview.png)
+![Dashboard Screenshot](assets/dashboard_preview.png)
 *The AutoSRE Interactive Dashboard provides a real-time console to observe the agent's decision-making process, safety gates, and counterfactual What-If planning during simulated incidents.*
 
 ## 🏗️ Architecture
