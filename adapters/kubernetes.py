@@ -6,8 +6,9 @@ Do NOT use in a live production environment without implementing the SafetyPipel
 
 from typing import Any
 
-from policies.safety_pipeline import SafetyPipeline, SafetyDecision
+from policies.safety_pipeline import SafetyDecision, SafetyPipeline
 from tools.base import BaseTool
+
 
 class KubernetesAdapter:
     def __init__(self, safety_pipeline: SafetyPipeline):

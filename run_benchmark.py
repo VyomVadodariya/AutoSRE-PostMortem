@@ -1,16 +1,16 @@
 import argparse
-import json
 import csv
+import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
+from agents.baselines import RandomBaselineAgent, RuleBasedBaselineAgent
 from agents.investigation.agent import InvestigationAgent
 from agents.orchestrator.orchestrator import Orchestrator
 from agents.planning.agent import PlanningAgent
 from agents.postmortem.agent import PostmortemAgent
 from agents.rca.agent import RCAAgent
 from agents.remediation.engine import RemediationEngine
-from agents.baselines import RandomBaselineAgent, RuleBasedBaselineAgent
 from environment.chaos.evaluator import ChaosEvaluator
 from environment.chaos.injector import ChaosInjector
 from environment.incidents.generator import IncidentGenerator
@@ -99,7 +99,7 @@ def main():
     os.makedirs(args.out_dir, exist_ok=True)
     
     meta_info = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "seed": args.seed,
         "episodes": total_episodes,
         "scenarios": scenarios,

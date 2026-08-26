@@ -1,6 +1,7 @@
-import streamlit as st
 import json
 import os
+
+import streamlit as st
 
 from agents.investigation.agent import InvestigationAgent
 from agents.orchestrator.orchestrator import Orchestrator

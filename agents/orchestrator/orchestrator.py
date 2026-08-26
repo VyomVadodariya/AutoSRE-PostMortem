@@ -3,8 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from environment.incidents.models import Incident
 from agents.base import BaseAgent
+from environment.incidents.models import Incident
 
 
 class ActionPlan(BaseModel):

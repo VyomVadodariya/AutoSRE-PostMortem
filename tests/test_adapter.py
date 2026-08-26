@@ -1,10 +1,10 @@
-import pytest
 
 from adapters.kubernetes import KubernetesAdapter
-from policies.safety_pipeline import SafetyPipeline
 from environment.observability.metrics import MetricsStore
-from tools.base import BaseTool
 from policies.risk.levels import RiskLevel
+from policies.safety_pipeline import SafetyPipeline
+from tools.base import BaseTool
+
 
 class DummyTool(BaseTool):
     def __init__(self, name, risk):

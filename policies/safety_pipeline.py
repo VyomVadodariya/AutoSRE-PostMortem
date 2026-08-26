@@ -1,9 +1,11 @@
 from typing import Any
+
 from pydantic import BaseModel
 
-from policies.risk.levels import RiskLevel
 from environment.observability.metrics import MetricsStore
+from policies.risk.levels import RiskLevel
 from tools.base import BaseTool
+
 
 class SafetyDecision(BaseModel):
     approved: bool

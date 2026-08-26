@@ -9,7 +9,6 @@ class BaseAgent(abc.ABC):
     @abc.abstractmethod
     def name(self) -> str:
         """Name of the agent."""
-        pass
 
     @abc.abstractmethod
     def handle_incident(self, incident: Incident) -> dict[str, Any]:
@@ -17,4 +16,3 @@ class BaseAgent(abc.ABC):
         Handle the given incident and return a dictionary containing actions taken,
         tokens used, and other relevant metadata for evaluation.
         """
-        pass

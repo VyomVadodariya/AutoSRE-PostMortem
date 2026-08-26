@@ -4,8 +4,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from environment.observability.metrics import MetricsStore
-from tools.registry import ToolRegistry
 from policies.safety_pipeline import SafetyPipeline
+from tools.registry import ToolRegistry
 
 
 class RemediationResult(BaseModel):
@@ -50,7 +50,7 @@ class RemediationEngine:
             )
             
         # 2. Snapshot (mock)
-        snapshot = copy.deepcopy(before_state)
+        _snapshot = copy.deepcopy(before_state)
         
         # 3. Execute
         kwargs = parameters.copy()
